@@ -228,20 +228,32 @@ KINGSTEEL Auction 是一個公司內部二手義賣競標系統，為一次性�
   ```
   - 點擊卡片 → 進入商品詳情頁
   
-- 底部
-  - 無限滾動 or 分頁（建議無限滾動）
-  - 返回頂部按鈕
+```
+    ├─→ 驗證失敗 → 返回錯誤訊息，前端顯示
+    │
+    └─→ 驗證成功
+         → 保存出價紀錄
+         → 更新商品的 currentPrice & highestBidder
+         → 記錄時間戳 (伺服器時間)
+         → 返回成功並廣播給所有客戶端
+```
 
-**資料結構**:
-```json
-{
-  "id": "P001",
-  "name": "二手辦公椅",
-  "images": ["url/to/image1.jpg", "url/to/image2.jpg"],
-  "startPrice": 300,
-  "currentPrice": 450,
-  "highestBidder": "張三",
-  "bidsCount": 5,
+**多人同時出價**:
+- 若在同一時刻（毫秒級）收到多筆出價，伺服器按收到順序處理（MVP 採用 Option A：row-level lock）。
+- 建議實作（選 A - `SELECT ... FOR UPDATE`）：
+  - 後端處理流程（伺服器時間為唯一來源，毫秒級）:
+    1. 開始 DB transaction
+    2. 執行 `SELECT * FROM products WHERE id = :productId FOR UPDATE`（鎖定該商品列）
+    3. 驗證商品狀態為 `Active`，並檢查出價金額是否符合規則（若有人出價則 > current_price，無人出價則 ≥ start_price）
+    4. 若驗證通過：INSERT 一筆 bids 紀錄（含後端 timestamp），UPDATE products 的 `current_price`、`highest_bidder_id`、`last_bid_time`
+    5. commit transaction，回傳成功結果
+    6. 若驗證失敗：rollback，回傳 `409` 或對應錯誤碼，並回傳最新 `currentPrice` 與伺服器 timestamp
+  - 錯誤/回饋設計：
+    - `4001 / INVALID_BID_AMOUNT`：金額不合法
+    - `4002 / AUCTION_NOT_ACTIVE`：拍賣非進行中
+    - `4005 / BID_TOO_FREQUENT`：出價過於頻繁（建議同一使用者最小間隔 1 秒）
+    - `409 / BID_CONFLICT`：競價衝突（其他人已更新價格），回傳最新價格供前端顯示
+  - 優點：簡單實作、強一致性，適合 200 人內活動；缺點：在極端高併發下可能成為鎖點，可在後續改為樂觀鎖或 queue。
   "status": "Active",
   "startTime": "2025-12-08T10:00:00Z",
   "endTime": "2025-12-08T12:00:00Z",
@@ -790,17 +802,20 @@ Response: { success: true } or { success: false, message }
 POST /api/bids
 Body: { productId: string, amount: number }
 Response:
-  ├─ 成功: { 
-      success: true,
-      bidId: string,
-      newPrice: number,
-      timestamp: ISO8601
-    }
-  └─ 失敗: { 
-      success: false,
-      message: string,
-      errorCode: "INVALID_AMOUNT" | "AUCTION_CLOSED" | etc
-    }
+  ├─ 成功 (200):
+  |   {
+  |     success: true,
+  |     bidId: string,
+  |     newPrice: number,
+  |     timestamp: ISO8601
+  |   }
+  └─ 失敗 (4xx):
+      {
+        success: false,
+        message: string,
+        errorCode: "INVALID_BID_AMOUNT" | "AUCTION_NOT_ACTIVE" | "BID_TOO_FREQUENT" | "BID_CONFLICT"
+      }
+  - 備註：若返回 `BID_CONFLICT` 或其他競價失敗，API 應同時回傳最新 `currentPrice` 與伺服器 timestamp，供前端更新顯示。
 
 GET /api/my-bids
 Query: { page?: number, productId?: string }
@@ -984,8 +999,9 @@ CREATE INDEX idx_bid_bidder ON bids(bidder_id);
 
 #### 3.5.3 業務邏輯驗證
 - 每筆出價必須在後端重新驗證（不信任前端資料）
-- 時間檢查：伺服器時間為唯一來源
-- 避免競態條件：使用資料庫事務或鎖機制
+- 時間檢查：伺服器時間為唯一來源（毫秒級 timestamp）
+- 避免競態條件：MVP 建議採用資料庫 row-level lock（`SELECT ... FOR UPDATE`）在 transaction 內處理出價；或依未來需求改為樂觀鎖（CAS）或 message-queue 排序消費。
+- 頻率限制：同一使用者最小間隔 1 秒（可配置），超限回傳 `BID_TOO_FREQUENT`。
 
 #### 3.5.4 敏感資訊
 - 不記錄或曝露員工密碼（不需要密碼）
