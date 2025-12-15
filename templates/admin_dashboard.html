@@ -1,0 +1,52 @@
+{% extends 'base.html' %}
+{% block content %}
+<div class="container mx-auto">
+    <div class="flex justify-between items-center mb-6">
+        <h1 class="text-3xl font-bold">管理後台儀表板</h1>
+        <div class="space-x-4">
+            <a href="{% url 'auctions:index' %}" class="text-gray-600 hover:text-blue-600">前往前台</a>
+            <a href="{% url 'auctions:admin_logout' %}"
+                class="bg-gray-200 text-gray-800 px-4 py-2 rounded hover:bg-gray-300">登出</a>
+        </div>
+    </div>
+
+    <!-- Stats Cards -->
+    <div class="grid grid-cols-1 md:grid-cols-4 gap-4 mb-8">
+        <div class="bg-white p-6 rounded shadow border-t-4 border-blue-500">
+            <div class="text-gray-500 text-sm">商品總數</div>
+            <div class="text-3xl font-bold">{{ stats.total_products }}</div>
+        </div>
+        <div class="bg-white p-6 rounded shadow border-t-4 border-green-500">
+            <div class="text-gray-500 text-sm">預估成交額</div>
+            <div class="text-3xl font-bold text-green-600">NT$ {{ stats.revenue }}</div>
+        </div>
+        <div class="bg-white p-6 rounded shadow border-t-4 border-yellow-500">
+            <div class="text-gray-500 text-sm">總出價次數</div>
+            <div class="text-3xl font-bold">{{ stats.total_bids }}</div>
+        </div>
+        <div class="bg-white p-6 rounded shadow border-t-4 border-purple-500">
+            <div class="text-gray-500 text-sm">在線人數 (Mock)</div>
+            <div class="text-3xl font-bold">{{ stats.online_users }}</div>
+        </div>
+    </div>
+
+    <!-- Navigation Menu -->
+    <div class="grid grid-cols-1 sm:grid-cols-3 gap-6">
+        <a href="{% url 'auctions:admin_products_list' %}"
+            class="block bg-white p-6 rounded shadow hover:shadow-lg transition group">
+            <h3 class="text-xl font-bold mb-2 group-hover:text-blue-600">📦 商品管理</h3>
+            <p class="text-gray-600">新增、編輯、刪除拍賣品。設定起標價與圖片。</p>
+        </a>
+        <a href="{% url 'auctions:admin_bids_list' %}"
+            class="block bg-white p-6 rounded shadow hover:shadow-lg transition group">
+            <h3 class="text-xl font-bold mb-2 group-hover:text-blue-600">🔨 出價紀錄</h3>
+            <p class="text-gray-600">檢視所有出價歷史。監控異常出價。</p>
+        </a>
+        <div
+            class="block bg-gray-50 p-6 rounded border border-dashed hover:border-gray-300 transition cursor-not-allowed opacity-60 relative">
+            <h3 class="text-xl font-bold mb-2">⏱️ 流標與時間 (開發中)</h3>
+            <p class="text-gray-600">設定全場拍賣時間、流標規則。</p>
+        </div>
+    </div>
+</div>
+{% endblock %}

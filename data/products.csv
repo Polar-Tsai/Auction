@@ -1,0 +1,3 @@
+id,name,start_price,current_price,status,start_time,end_time,last_bid_time,brand,description,image_url,bids_count,highest_bidder_id
+1,Sony PS5 Pro,24000,24000,Active,2025-12-01T10:00,2025-12-31T23:59:59,,,New Console,https://img.icons8.com/?size=100&id=UGjeZAvO94lh&format=png&color=000000,0,
+2,行動電源,100,100,Upcoming,2025-12-15T10:00,2025-12-16T10:00,,,有八成新、全新,https://img.icons8.com/?size=256w&id=69679&format=png,0,

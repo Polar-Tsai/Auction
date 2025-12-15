@@ -1,0 +1,15 @@
+{% extends 'base.html' %}
+{% block content %}
+<h1 class="text-2xl font-bold mb-4">拍賣品列表</h1>
+<div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+  {% for p in products %}
+  <div class="bg-white p-4 rounded shadow">
+    <h2 class="font-semibold">{{ p.name }}</h2>
+    <p>起標價: NT${{ p.start_price }}</p>
+    <p>目前價: NT${{ p.current_price }}</p>
+    <p>狀態: {{ p.status }}</p>
+    <a href="/products/{{ p.id }}" class="text-blue-600">查看詳情</a>
+  </div>
+  {% endfor %}
+</div>
+{% endblock %}

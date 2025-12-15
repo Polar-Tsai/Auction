@@ -1,0 +1,27 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Kingsteel Auction</title>
+  <!-- Tailwind via CDN for scaffold -->
+  <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-gray-100 text-gray-900">
+  <div class="container mx-auto p-4">
+    <header class="flex justify-between items-center mb-4">
+      <div class="text-lg font-bold">Kingsteel Auction</div>
+      <div>
+        {% if employee %}
+          <span class="mr-4">歡迎，{{ employee.name }}</span>
+          <a href="{% url 'auctions:logout' %}" class="text-sm text-gray-700">登出</a>
+        {% else %}
+          <a href="{% url 'auctions:login' %}" class="mr-4 text-sm text-blue-600">員工登入</a>
+          <a href="{% url 'auctions:admin_login' %}" class="text-sm text-gray-700">管理員登入</a>
+        {% endif %}
+      </div>
+    </header>
+    {% block content %}{% endblock %}
+  </div>
+</body>
+</html>

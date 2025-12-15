@@ -1,0 +1,75 @@
+{% extends 'base.html' %}
+{% block content %}
+<div class="container mx-auto">
+    <div class="flex justify-between items-center mb-6">
+        <div class="flex items-center gap-4">
+            <a href="{% url 'auctions:admin_dashboard' %}" class="text-gray-500 hover:text-black">&larr; 返回儀表板</a>
+            <h1 class="text-2xl font-bold">已上架商品</h1>
+        </div>
+        <a href="{% url 'auctions:admin_product_create' %}"
+            class="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700 shadow">
+            + 新增拍賣品
+        </a>
+    </div>
+
+    <div class="bg-white rounded shadow overflow-hidden">
+        <table class="min-w-full text-left text-sm">
+            <thead class="bg-gray-50 border-b">
+                <tr>
+                    <th class="px-6 py-3 font-medium text-gray-500">ID</th>
+                    <th class="px-6 py-3 font-medium text-gray-500">圖片</th>
+                    <th class="px-6 py-3 font-medium text-gray-500">品名</th>
+                    <th class="px-6 py-3 font-medium text-gray-500">起標價</th>
+                    <th class="px-6 py-3 font-medium text-gray-500">目前價</th>
+                    <th class="px-6 py-3 font-medium text-gray-500">出價數</th>
+                    <th class="px-6 py-3 font-medium text-gray-500">狀態</th>
+                    <th class="px-6 py-3 font-medium text-gray-500">操作</th>
+                </tr>
+            </thead>
+            <tbody class="divide-y divide-gray-200">
+                {% for p in products %}
+                <tr class="hover:bg-gray-50">
+                    <td class="px-6 py-4 text-gray-500">#{{ p.id }}</td>
+                    <td class="px-6 py-4">
+                        {% if p.image_url %}
+                        <img src="{{ p.image_url }}" class="h-10 w-10 object-cover rounded border" />
+                        {% else %}
+                        <div
+                            class="h-10 w-10 bg-gray-200 rounded flex items-center justify-center text-xs text-gray-500">
+                            No Img</div>
+                        {% endif %}
+                    </td>
+                    <td class="px-6 py-4 font-semibold text-gray-900">{{ p.name }}</td>
+                    <td class="px-6 py-4">NT$ {{ p.start_price }}</td>
+                    <td class="px-6 py-4 text-green-600 font-bold">NT$ {{ p.current_price|default:p.start_price }}</td>
+                    <td class="px-6 py-4">{{ p.bids_count }}</td>
+                    <td class="px-6 py-4">
+                        <span class="px-2 py-1 text-xs rounded-full 
+                        {% if p.status == 'Active' %}bg-green-100 text-green-800
+                        {% elif p.status == 'Upcoming' %}bg-blue-100 text-blue-800
+                        {% else %}bg-gray-100 text-gray-800{% endif %}">
+                            {{ p.status }}
+                        </span>
+                    </td>
+                    <td class="px-6 py-4 flex gap-2">
+                        <a href="{% url 'auctions:admin_product_edit' p.id %}"
+                            class="text-blue-600 hover:text-blue-900">編輯</a>
+                        <form action="{% url 'auctions:admin_product_delete' p.id %}" method="POST"
+                            onsubmit="return confirm('確定要刪除「{{ p.name }}」嗎？此操作無法復原。');">
+                            {% csrf_token %}
+                            <button class="text-red-600 hover:text-red-900">刪除</button>
+                        </form>
+                    </td>
+                </tr>
+                {% empty %}
+                <tr>
+                    <td colspan="8" class="px-6 py-10 text-center text-gray-500">
+                        尚無商品，請點擊右上角新增。
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}

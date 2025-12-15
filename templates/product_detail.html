@@ -1,0 +1,141 @@
+{% extends 'base.html' %}
+{% block content %}
+<div class="max-w-2xl mx-auto bg-white p-6 rounded shadow">
+    <div id="toast-container" class="fixed top-4 right-4 z-50"></div>
+
+    <div class="mb-6 border-b pb-4">
+        <h1 class="text-3xl font-bold mb-2">{{ product.name }}</h1>
+        <div class="grid grid-cols-2 gap-4 text-sm text-gray-600">
+            <div>狀態: <span id="status-display" class="font-semibold text-blue-600">{{ product.status }}</span></div>
+            <div>結束時間: {{ product.end_time }}</div>
+        </div>
+    </div>
+
+    <div class="mb-8">
+        <div class="text-4xl font-bold text-red-600 mb-2">
+            NT$ <span id="current-price">{{ product.current_price|default:product.start_price }}</span>
+        </div>
+        <div class="text-gray-500">起標價: NT$ {{ product.start_price }}</div>
+        <div class="text-gray-500">出價次數: <span id="bids-count">{{ product.bids_count|default:0 }}</span></div>
+    </div>
+
+    {% if employee %}
+    <div class="bg-gray-50 p-4 rounded border">
+        <h3 class="font-semibold mb-3">我要出價</h3>
+        <div class="flex gap-2">
+            <input type="number" id="bid-amount" class="flex-1 border p-2 rounded" placeholder="輸入金額" />
+            <button onclick="placeBid()" class="bg-red-600 text-white px-6 py-2 rounded hover:bg-red-700 transition">
+                出價
+            </button>
+        </div>
+        <p class="text-xs text-gray-500 mt-2">注意：出價後無法悔標，請謹慎操作。</p>
+    </div>
+    {% else %}
+    <div class="bg-yellow-50 p-4 rounded border text-center text-yellow-800">
+        請先 <a href="{% url 'auctions:login' %}" class="underline font-bold">登入</a> 才能參與競標
+    </div>
+    {% endif %}
+
+    <div class="mt-8">
+        <h3 class="font-semibold mb-2">出價紀錄 (最近 10 筆)</h3>
+        <ul id="bids-list" class="space-y-2 border-t pt-2">
+            <!-- Populated via JS -->
+            <li class="text-gray-400 text-sm">載入中...</li>
+        </ul>
+    </div>
+</div>
+
+<script>
+const productId = {{ product.id }};
+const REFRESH_INTERVAL = 3000;
+
+function showToast(message, type='info') {
+    const container = document.getElementById('toast-container');
+    const el = document.createElement('div');
+    const colorClass = type === 'error' ? 'bg-red-500' : 'bg-green-500';
+    el.className = `${colorClass} text-white px-4 py-2 rounded shadow mb-2 transition-opacity duration-300 opacity-0 transform translate-x-4`;
+    el.innerText = message;
+    container.appendChild(el);
+    requestAnimationFrame(() => {
+        el.classList.remove('opacity-0', 'translate-x-4');
+    });
+    setTimeout(() => {
+        el.classList.add('opacity-0', 'translate-x-4');
+        setTimeout(() => el.remove(), 300);
+    }, 3000);
+}
+
+async function placeBid() {
+    const amountInput = document.getElementById('bid-amount');
+    const amount = amountInput.value;
+    
+    if (!amount) {
+        showToast('請輸入金額', 'error');
+        return;
+    }
+
+    try {
+        const res = await fetch('/place_bid/', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                // Add csrf token if not strictly disabled or handled by cookie, but views.py uses @csrf_exempt for now or we rely on cookie
+                // 'X-CSRFToken': getCookie('csrftoken') 
+            },
+            body: JSON.stringify({ productId, amount })
+        });
+        
+        const data = await res.json();
+        
+        if (data.success) {
+            showToast(`出價成功！目前價格 ${data.newPrice}`, 'success');
+            amountInput.value = '';
+            pollData(); // Refresh immediately
+        } else {
+            showToast(data.message || '出價失敗', 'error');
+        }
+    } catch (e) {
+        console.error(e);
+        showToast('網路錯誤，請稍後重試', 'error');
+    }
+}
+
+async function pollData() {
+    try {
+        const res = await fetch(`/products/${productId}/poll/`);
+        const data = await res.json();
+        if (data.success) {
+            // Update Price
+            const p = data.product;
+            document.getElementById('current-price').innerText = p.current_price || p.start_price;
+            document.getElementById('bids-count').innerText = p.bids_count || 0;
+            
+            // Update List
+            const list = document.getElementById('bids-list');
+            list.innerHTML = '';
+            if (data.bids && data.bids.length > 0) {
+                data.bids.forEach(bid => {
+                    const params = new URLSearchParams({ ts: bid.bid_timestamp }); // formatting timestamp logic here if needed, or backend sends formatted
+                    // Simple formatting
+                    const d = new Date(bid.bid_timestamp);
+                    const dateStr = d.toLocaleString('zh-TW');
+                    list.innerHTML += `<li class="flex justify-between text-sm border-b py-1">
+                        <span>${bid.bidder_id}</span>
+                        <span class="font-mono">NT$ ${bid.amount}</span>
+                        <span class="text-gray-500 text-xs">${dateStr}</span>
+                    </li>`;
+                });
+            } else {
+                list.innerHTML = '<li class="text-gray-400 text-sm">尚無出價</li>';
+            }
+        }
+    } catch (e) {
+        console.log('Poll failed', e);
+    }
+}
+
+// Start polling
+setInterval(pollData, REFRESH_INTERVAL);
+pollData(); // Initial load
+</script>
+{% endblock %}

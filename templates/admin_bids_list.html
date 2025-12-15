@@ -1,0 +1,40 @@
+{% extends 'base.html' %}
+{% block content %}
+<div class="container mx-auto">
+    <div class="flex items-center gap-4 mb-6">
+        <a href="{% url 'auctions:admin_dashboard' %}" class="text-gray-500 hover:text-black">&larr; 返回儀表板</a>
+        <h1 class="text-2xl font-bold">出價紀錄</h1>
+    </div>
+
+    <div class="bg-white rounded shadow overflow-hidden">
+        <table class="min-w-full text-left text-sm">
+            <thead class="bg-gray-50 border-b">
+                <tr>
+                    <th class="px-6 py-3 font-medium text-gray-500">時間</th>
+                    <th class="px-6 py-3 font-medium text-gray-500">商品ID</th>
+                    <th class="px-6 py-3 font-medium text-gray-500">出價者工號</th>
+                    <th class="px-6 py-3 font-medium text-gray-500">金額</th>
+                    <th class="px-6 py-3 font-medium text-gray-500">流水號</th>
+                </tr>
+            </thead>
+            <tbody class="divide-y divide-gray-200">
+                {% for b in bids %}
+                <tr class="hover:bg-gray-50">
+                    <td class="px-6 py-4 text-gray-600">{{ b.bid_timestamp }}</td>
+                    <td class="px-6 py-4 font-mono">#{{ b.product_id }}</td>
+                    <td class="px-6 py-4">{{ b.bidder_id }}</td>
+                    <td class="px-6 py-4 font-bold">NT$ {{ b.amount }}</td>
+                    <td class="px-6 py-4 text-gray-400">#{{ b.id }}</td>
+                </tr>
+                {% empty %}
+                <tr>
+                    <td colspan="5" class="px-6 py-10 text-center text-gray-500">
+                        目前沒有任何出價紀錄。
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}

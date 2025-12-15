@@ -1,0 +1,15 @@
+{% extends 'base.html' %}
+{% block content %}
+<h1 class="text-2xl font-bold mb-4">員工登入</h1>
+{% if error %}
+  <div class="text-red-600 mb-2">{{ error }}</div>
+{% endif %}
+<form method="post" class="space-y-2">
+  {% csrf_token %}
+  <label>工號</label>
+  <input name="employeeId" class="border p-2" />
+  <div>
+    <button class="bg-blue-600 text-white px-3 py-1">登入</button>
+  </div>
+</form>
+{% endblock %}
