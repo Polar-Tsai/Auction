@@ -1,15 +1,168 @@
 {% extends 'base.html' %}
 {% block content %}
-<h1 class="text-2xl font-bold mb-4">拍賣品列表</h1>
-<div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-  {% for p in products %}
-  <div class="bg-white p-4 rounded shadow">
-    <h2 class="font-semibold">{{ p.name }}</h2>
-    <p>起標價: NT${{ p.start_price }}</p>
-    <p>目前價: NT${{ p.current_price }}</p>
-    <p>狀態: {{ p.status }}</p>
-    <a href="/products/{{ p.id }}" class="text-blue-600">查看詳情</a>
+<div class="mb-8">
+  <!-- Tabs -->
+  <div class="flex space-x-8 border-b border-gray-300 mb-6">
+    <button onclick="filterProducts('Open')" id="tab-Open" class="tab-btn px-2 py-2 text-blue-600 font-bold border-b-2 border-blue-600 focus:outline-none transition-colors">進行中</button>
+    <button onclick="filterProducts('Closed')" id="tab-Closed" class="tab-btn px-2 py-2 text-gray-600 hover:text-gray-800 focus:outline-none transition-colors border-b-2 border-transparent">已結標</button>
+    <button onclick="filterProducts('Upcoming')" id="tab-Upcoming" class="tab-btn px-2 py-2 text-gray-600 hover:text-gray-800 focus:outline-none transition-colors border-b-2 border-transparent">尚未開始</button>
   </div>
-  {% endfor %}
+  
+  <!-- Products Grid -->
+  <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6" id="products-grid">
+    {% for p in products %}
+    <div class="product-card group bg-gray-100 rounded-lg shadow-sm hover:shadow-md transition overflow-hidden border border-gray-200" 
+         data-status="{{ p.status }}"
+         data-end="{{ p.end_time }}" 
+         data-start="{{ p.start_time }}">
+       
+       <!-- Image Section (Sky/Hill placeholder aesthetics if no image) -->
+       <div class="h-48 relative bg-blue-200 overflow-hidden">
+         {% if p.image_url %}
+            <img src="{{ p.image_url }}" alt="{{ p.name }}" class="w-full h-full object-cover">
+         {% else %}
+            <!-- CSS Landscape Placeholder -->
+            <div class="absolute inset-0 bg-blue-200">
+                <!-- Clouds (simple circles) -->
+                <div class="absolute top-8 left-1/4 w-16 h-16 bg-white rounded-full opacity-80 blur-sm"></div>
+                <div class="absolute top-6 left-1/3 w-20 h-20 bg-white rounded-full opacity-80 blur-sm"></div>
+                <div class="absolute top-10 right-1/4 w-12 h-12 bg-white rounded-full opacity-60 blur-sm"></div>
+                <!-- Hills -->
+                <div class="absolute bottom-0 w-full h-1/3 bg-green-600 rounded-t-[50%] scale-150 translate-y-2"></div>
+                <div class="absolute bottom-0 w-full h-1/4 bg-green-700 rounded-t-[40%] scale-125 translate-x-10 translate-y-4"></div>
+            </div>
+         {% endif %}
+       </div>
+       
+       <!-- Info Body -->
+       <div class="p-4">
+         <h3 class="font-bold text-lg text-gray-900 mb-1 truncate" title="{{ p.name }}">{{ p.name }}</h3>
+         
+         <div class="mb-1">
+           <div class="text-xs text-gray-500">目前價格</div>
+           <div class="flex justify-between items-baseline">
+             <span class="text-2xl font-bold text-blue-600">
+                <!-- Simple comma formatting handled by intcomma if available, else standard -->
+                ${{ p.current_price|floatformat:0 }}
+             </span>
+             <span class="text-xs text-gray-500">{{ p.bids_count|default:0 }}次出價</span>
+           </div>
+         </div>
+         
+         <!-- Timer / Status Text -->
+         <div class="flex items-center text-sm text-gray-700 mb-4 h-6">
+            <span class="mr-1 opacity-70">🕒</span>
+            <span class="countdown-timer text-xs font-medium">---</span>
+         </div>
+         
+         <!-- Action Button -->
+         <div class="text-center">
+           {% if p.status == 'Open' %}
+             <a href="{% url 'auctions:product_detail' p.id %}" class="block w-full py-2 bg-gradient-to-b from-yellow-300 to-yellow-500 hover:from-yellow-400 hover:to-yellow-600 text-black font-bold rounded shadow-sm border border-yellow-600 text-sm">
+               出價
+             </a>
+           {% elif p.status == 'Upcoming' %}
+             <button disabled class="block w-full py-2 bg-gray-300 text-gray-600 font-bold rounded shadow-sm border border-gray-400 cursor-not-allowed text-sm">
+               尚未開標
+             </button>
+           {% else %}
+             <button disabled class="block w-full py-2 bg-gray-300 text-gray-600 font-bold rounded shadow-sm border border-gray-400 cursor-not-allowed text-sm">
+               已結標
+             </button>
+           {% endif %}
+         </div>
+       </div>
+    </div>
+    {% empty %}
+    <div class="col-span-full text-center py-12 text-gray-500">
+      目前沒有商品
+    </div>
+    {% endfor %}
+  </div>
 </div>
+
+<script>
+  function filterProducts(status) {
+    // Update Tabs
+    document.querySelectorAll('.tab-btn').forEach(btn => {
+      btn.classList.remove('text-blue-600', 'font-bold', 'border-blue-600');
+      btn.classList.add('text-gray-600', 'border-transparent');
+    });
+    const activeBtn = document.getElementById('tab-' + status);
+    if(activeBtn) {
+      activeBtn.classList.remove('text-gray-600', 'border-transparent');
+      activeBtn.classList.add('text-blue-600', 'font-bold', 'border-blue-600');
+    }
+
+    // Filter Grid
+    const cards = document.querySelectorAll('.product-card');
+    let visibleCount = 0;
+    cards.forEach(card => {
+      const cardStatus = card.getAttribute('data-status');
+      // Simple logic: if status matches, show. 
+      // Note: Backend might use 'Closed' or just not 'Open'/'Upcoming'.
+      // If filtering for 'Closed', show anything not Open/Upcoming? Or explicit?
+      // Let's assume explicit status for now. 
+      // If cardStatus is not one of Open/Upcoming, we treat it as Closed?
+      
+      let show = false;
+      if (status === 'Closed') {
+         show = (cardStatus !== 'Open' && cardStatus !== 'Upcoming');
+      } else {
+         show = (cardStatus === status);
+      }
+      
+      card.style.display = show ? 'block' : 'none';
+      if(show) visibleCount++;
+    });
+  }
+
+  function updateTimers() {
+    const cards = document.querySelectorAll('.product-card');
+    const now = new Date().getTime();
+
+    cards.forEach(card => {
+      const status = card.getAttribute('data-status');
+      const endTimeStr = card.getAttribute('data-end');
+      const startTimeStr = card.getAttribute('data-start');
+      const timerEl = card.querySelector('.countdown-timer');
+      
+      if (!timerEl) return;
+
+      if (status === 'Open' && endTimeStr) {
+        const end = new Date(endTimeStr).getTime();
+        const dist = end - now;
+        if (dist < 0) {
+          timerEl.innerText = '已結束';
+        } else {
+           // Calc hours, minutes, seconds
+           const h = Math.floor(dist / (1000 * 60 * 60));
+           const m = Math.floor((dist % (1000 * 60 * 60)) / (1000 * 60));
+           const s = Math.floor((dist % (1000 * 60)) / 1000);
+           timerEl.innerText = `${h}時${m}分${s}秒結束`;
+        }
+      } else if (status === 'Upcoming' && startTimeStr) {
+        const start = new Date(startTimeStr).getTime();
+        const dist = start - now;
+        if (dist < 0) {
+             timerEl.innerText = '即將開始'; // Or should be open?
+        } else {
+           const h = Math.floor(dist / (1000 * 60 * 60));
+           const m = Math.floor((dist % (1000 * 60 * 60)) / (1000 * 60));
+           const s = Math.floor((dist % (1000 * 60)) / 1000);
+           timerEl.innerText = `${h}時${m}分${s}秒開始`;
+        }
+      } else {
+        timerEl.innerText = '---';
+      }
+    });
+  }
+
+  // Initialize
+  document.addEventListener('DOMContentLoaded', () => {
+    filterProducts('Open'); // Default to Open
+    setInterval(updateTimers, 1000);
+    updateTimers();
+  });
+</script>
 {% endblock %}

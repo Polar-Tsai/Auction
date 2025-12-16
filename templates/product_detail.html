@@ -1,47 +1,86 @@
 {% extends 'base.html' %}
 {% block content %}
-<div class="max-w-2xl mx-auto bg-white p-6 rounded shadow">
+<div class="max-w-6xl mx-auto bg-white p-6 rounded-lg shadow-lg">
     <div id="toast-container" class="fixed top-4 right-4 z-50"></div>
 
-    <div class="mb-6 border-b pb-4">
-        <h1 class="text-3xl font-bold mb-2">{{ product.name }}</h1>
-        <div class="grid grid-cols-2 gap-4 text-sm text-gray-600">
-            <div>狀態: <span id="status-display" class="font-semibold text-blue-600">{{ product.status }}</span></div>
-            <div>結束時間: {{ product.end_time }}</div>
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-8 mb-8">
+        <!-- Left: Image Section -->
+        <div class="bg-gray-100 rounded-lg h-96 flex items-center justify-center text-gray-400 overflow-hidden">
+            {% if product.image_url %}
+                 <img src="{{ product.image_url }}" alt="{{ product.name }}" class="w-full h-full object-cover">
+            {% else %}
+                 <span class="text-6xl">📷</span>
+            {% endif %}
+        </div>
+
+        <!-- Right: Info Section -->
+        <div class="flex flex-col justify-between">
+            <div>
+                <div class="flex justify-between items-start mb-4">
+                    <h1 class="text-3xl font-bold text-gray-900">{{ product.name }}</h1>
+                    <span id="status-display" class="px-3 py-1 rounded-full text-sm font-medium
+                        {% if product.status == 'Open' %}bg-green-100 text-green-800
+                        {% elif product.status == 'Upcoming' %}bg-blue-100 text-blue-800
+                        {% else %}bg-gray-100 text-gray-800{% endif %}">
+                        {{ product.status }}
+                    </span>
+                </div>
+                
+                <div class="mb-6 space-y-2">
+                    <p class="text-gray-600">商品描述 (範例): 這是一件非常稀有的商品，請把握機會。</p>
+                    <p class="text-sm text-gray-500">截標時間: {{ product.end_time|slice:":10" }}</p>
+                </div>
+
+                <div class="bg-gray-50 p-6 rounded-lg border border-gray-100 mb-6">
+                    <div class="text-sm text-gray-500 mb-1">目前最高價</div>
+                    <div class="text-5xl font-mono font-bold text-red-600 mb-2">
+                        NT$ <span id="current-price">{{ product.current_price|default:product.start_price }}</span>
+                    </div>
+                    <div class="flex justify-between text-sm text-gray-500">
+                        <span>起標: NT$ {{ product.start_price }}</span>
+                        <span>出價: <span id="bids-count">{{ product.bids_count|default:0 }}</span> 次</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Action Section -->
+            {% if employee %}
+            <div class="space-y-3">
+                <label class="block text-sm font-medium text-gray-700">您要出價多少？</label>
+                <div class="flex gap-2">
+                    <input type="number" id="bid-amount" class="flex-1 border-2 border-gray-300 focus:border-blue-600 rounded px-4 py-2 outline-none text-lg" placeholder="輸入金額" />
+                    <button onclick="placeBid()" class="bg-red-600 hover:bg-red-700 text-white px-8 py-2 rounded font-bold text-lg transition shadow-md">
+                        出價
+                    </button>
+                </div>
+                <p class="text-xs text-gray-500">注意：出價即便視為契約成立，無法取消。</p>
+            </div>
+            {% else %}
+            <div class="bg-yellow-50 p-4 rounded text-center text-yellow-800 border border-yellow-200">
+                請先 <a href="{% url 'auctions:login' %}" class="underline font-bold hover:text-yellow-900">員工登入</a> 參與競標
+            </div>
+            {% endif %}
         </div>
     </div>
 
-    <div class="mb-8">
-        <div class="text-4xl font-bold text-red-600 mb-2">
-            NT$ <span id="current-price">{{ product.current_price|default:product.start_price }}</span>
+    <!-- Bottom: History Section -->
+    <div class="border-t pt-8">
+        <h3 class="text-xl font-bold mb-4 text-gray-800">出價歷史記錄 (最新 10 筆)</h3>
+        <div class="overflow-x-auto">
+            <table class="w-full text-left">
+                <thead class="bg-gray-50 text-gray-600 text-sm uppercase">
+                    <tr>
+                        <th class="p-3">競標者</th>
+                        <th class="p-3">金額</th>
+                        <th class="p-3">時間</th>
+                    </tr>
+                </thead>
+                <tbody id="bids-list" class="divide-y divide-gray-100">
+                     <!-- Populated via JS -->
+                     <tr><td colspan="3" class="p-4 text-center text-gray-500">載入中...</td></tr>
+                </tbody>
+            </table>
         </div>
-        <div class="text-gray-500">起標價: NT$ {{ product.start_price }}</div>
-        <div class="text-gray-500">出價次數: <span id="bids-count">{{ product.bids_count|default:0 }}</span></div>
-    </div>
-
-    {% if employee %}
-    <div class="bg-gray-50 p-4 rounded border">
-        <h3 class="font-semibold mb-3">我要出價</h3>
-        <div class="flex gap-2">
-            <input type="number" id="bid-amount" class="flex-1 border p-2 rounded" placeholder="輸入金額" />
-            <button onclick="placeBid()" class="bg-red-600 text-white px-6 py-2 rounded hover:bg-red-700 transition">
-                出價
-            </button>
-        </div>
-        <p class="text-xs text-gray-500 mt-2">注意：出價後無法悔標，請謹慎操作。</p>
-    </div>
-    {% else %}
-    <div class="bg-yellow-50 p-4 rounded border text-center text-yellow-800">
-        請先 <a href="{% url 'auctions:login' %}" class="underline font-bold">登入</a> 才能參與競標
-    </div>
-    {% endif %}
-
-    <div class="mt-8">
-        <h3 class="font-semibold mb-2">出價紀錄 (最近 10 筆)</h3>
-        <ul id="bids-list" class="space-y-2 border-t pt-2">
-            <!-- Populated via JS -->
-            <li class="text-gray-400 text-sm">載入中...</li>
-        </ul>
     </div>
 </div>
 
@@ -115,18 +154,17 @@ async function pollData() {
             list.innerHTML = '';
             if (data.bids && data.bids.length > 0) {
                 data.bids.forEach(bid => {
-                    const params = new URLSearchParams({ ts: bid.bid_timestamp }); // formatting timestamp logic here if needed, or backend sends formatted
                     // Simple formatting
                     const d = new Date(bid.bid_timestamp);
                     const dateStr = d.toLocaleString('zh-TW');
-                    list.innerHTML += `<li class="flex justify-between text-sm border-b py-1">
-                        <span>${bid.bidder_id}</span>
-                        <span class="font-mono">NT$ ${bid.amount}</span>
-                        <span class="text-gray-500 text-xs">${dateStr}</span>
-                    </li>`;
+                    list.innerHTML += `<tr class="hover:bg-gray-50 transition">
+                        <td class="p-3 font-medium text-gray-700">${bid.bidder_id}</td>
+                        <td class="p-3 font-mono text-red-600 font-bold">NT$ ${bid.amount}</td>
+                        <td class="p-3 text-gray-500 text-sm">${dateStr}</td>
+                    </tr>`;
                 });
             } else {
-                list.innerHTML = '<li class="text-gray-400 text-sm">尚無出價</li>';
+                list.innerHTML = '<tr><td colspan="3" class="p-8 text-center text-gray-400">目前尚無出價，成為第一個出價者！</td></tr>';
             }
         }
     } catch (e) {

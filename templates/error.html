@@ -1,0 +1,12 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="max-w-md mx-auto mt-10 bg-white p-8 border border-gray-200 rounded-lg shadow-sm text-center">
+    <div class="text-red-500 text-5xl mb-4">⚠️</div>
+    <h2 class="text-2xl font-bold text-gray-800 mb-2">發生錯誤</h2>
+    <p class="text-gray-600 mb-6">{{ error|default:"系統發生未預期的錯誤，請稍後重試。" }}</p>
+    <a href="{% url 'auctions:products_list' %}" class="inline-block px-6 py-2 bg-blue-600 text-white font-bold rounded hover:bg-blue-700 transition-colors">
+        回首頁
+    </a>
+</div>
+{% endblock %}

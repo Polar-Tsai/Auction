@@ -38,16 +38,60 @@ class ExcelAdapter:
         portalocker.unlock(f)
         f.close()
 
+    def _derive_status(self, product):
+        """
+        Derive status based on time, unless explicitly Unsold.
+        """
+        if product.get('status') == 'Unsold':
+            return 'Unsold'
+            
+        start_str = product.get('start_time')
+        end_str = product.get('end_time')
+        
+        if not start_str or not end_str:
+            return product.get('status', 'Upcoming')
+
+        try:
+            now = datetime.utcnow()
+            # Handle ISO format Z or no Z
+            start_time = datetime.fromisoformat(start_str.replace('Z', '+00:00')) if 'T' in start_str else datetime.strptime(start_str, "%Y-%m-%d %H:%M")
+            end_time = datetime.fromisoformat(end_str.replace('Z', '+00:00')) if 'T' in end_str else datetime.strptime(end_str, "%Y-%m-%d %H:%M")
+            
+            # Naive to aware conversion if needed, assuming UTC for now as per code
+            # But wait, datetime.utcnow() is naive. So let's keep everything naive or aware.
+            # Simplified: Use string comparison if ISO format, but better to parse.
+            # Let's standardize on naive matching logic or just try/except.
+            # Given previous code uses isoformat(), let's try direct comparison if formats match, 
+            # but parsing is safer.
+            
+            # Hack for quick fix: remove timezone info to compare with utcnow() which is naive
+            if start_time.tzinfo: start_time = start_time.replace(tzinfo=None)
+            if end_time.tzinfo: end_time = end_time.replace(tzinfo=None)
+            
+            if now < start_time:
+                return 'Upcoming'
+            elif now > end_time:
+                return 'Ended' # Closed
+            else:
+                return 'Open' # Active
+        except Exception:
+            return product.get('status', 'Upcoming')
+
     def get_all_products(self):
         df = pd.read_csv(self.products_path)
-        return df.to_dict(orient='records')
+        products = df.to_dict(orient='records')
+        for p in products:
+            p['status'] = self._derive_status(p)
+        return products
 
     def get_product_by_id(self, product_id):
         df = pd.read_csv(self.products_path)
         res = df[df['id'] == int(product_id)]
         if res.empty:
             return None
-        return res.iloc[0].to_dict()
+        product = res.iloc[0].to_dict()
+        product['status'] = self._derive_status(product)
+        return product
 
     def get_employee_by_employeeId(self, employeeId):
         try:
@@ -63,6 +107,29 @@ class ExcelAdapter:
         df = pd.read_csv(self.bids_path)
         res = df[df['product_id'] == int(product_id)].sort_values('bid_timestamp', ascending=False)
         return res.head(limit).to_dict(orient='records')
+
+    def get_bids_for_employee(self, employee_id):
+        df_bids = pd.read_csv(self.bids_path)
+        # Filter by bidder_id (employee_id should be string usually, but let's ensure type safety)
+        # In save_bid we saved it as is. In login we stored it as string/from csv.
+        # Let's ensure comparison works.
+        res = df_bids[df_bids['bidder_id'].astype(str) == str(employee_id)].sort_values('bid_timestamp', ascending=False)
+        
+        bids = res.to_dict(orient='records')
+        
+        # Enrich with product name
+        if not bids:
+            return []
+            
+        df_prod = pd.read_csv(self.products_path)
+        # Create a map of id -> name
+        prod_map = df_prod.set_index('id')['name'].to_dict()
+        
+        for b in bids:
+            pid = b.get('product_id')
+            b['product_name'] = prod_map.get(pid, f'Unknown Product ({pid})')
+            
+        return bids
 
     def save_bid(self, product_id, employee_id, amount):
         """

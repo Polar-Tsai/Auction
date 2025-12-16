@@ -1,15 +1,38 @@
 {% extends 'base.html' %}
 {% block content %}
-<h1 class="text-2xl font-bold mb-4">員工登入</h1>
-{% if error %}
-  <div class="text-red-600 mb-2">{{ error }}</div>
-{% endif %}
-<form method="post" class="space-y-2">
-  {% csrf_token %}
-  <label>工號</label>
-  <input name="employeeId" class="border p-2" />
-  <div>
-    <button class="bg-blue-600 text-white px-3 py-1">登入</button>
+<div class="flex justify-center items-center min-h-[60vh]">
+  <div class="bg-white p-8 rounded-lg shadow-lg w-full max-w-md border border-gray-200 relative">
+    
+    <!-- User Badge -->
+    <div class="absolute top-4 right-4 bg-gray-200 text-gray-700 text-xs px-2 py-1 rounded">
+      User
+    </div>
+
+    <h1 class="text-3xl font-bold mb-8 text-center tracking-wider text-gray-800">
+      龍舟計畫<br>
+      <span class="text-xl font-normal text-gray-600">競拍網站</span>
+    </h1>
+
+    {% if error %}
+      <div class="bg-red-50 text-red-600 p-3 rounded mb-4 text-sm text-center border border-red-200">
+        {{ error }}
+      </div>
+    {% endif %}
+
+    <form method="post" class="space-y-6">
+      {% csrf_token %}
+      
+      <div>
+        <label class="block text-gray-700 mb-2 font-medium">工號</label>
+        <input name="employeeId" type="text" class="w-full border-b-2 border-gray-300 focus:border-blue-600 outline-none py-2 transition-colors bg-transparent" placeholder="請輸入工號 (例: 11305)" required />
+      </div>
+
+      <div class="pt-4">
+        <button class="w-full bg-slate-800 hover:bg-slate-900 text-white font-bold py-3 rounded transition duration-200">
+          Enter
+        </button>
+      </div>
+    </form>
   </div>
-</form>
+</div>
 {% endblock %}

@@ -80,6 +80,19 @@ def login_view(request):
     return render(request, 'login.html')
 
 
+def user_bids_list(request):
+    employee = request.session.get('employee')
+    if not employee:
+        return redirect('auctions:login')
+        
+    try:
+        bids = adapter.get_bids_for_employee(employee.get('employeeId'))
+        return render(request, 'user_bids.html', {'bids': bids, 'employee': employee})
+    except Exception as e:
+        logger.error(f"Error loading user bids for {employee.get('employeeId')}", exc_info=True)
+        return render(request, 'error.html', {'error': '無法讀取您的出價紀錄'})
+
+
 def logout_view(request):
     request.session.pop('employee', None)
     request.session.pop('is_admin', None)

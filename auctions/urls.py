@@ -11,6 +11,7 @@ urlpatterns = [
     path('logout/', views.logout_view, name='logout'),
     path('products/', views.products_list, name='products_list'),
     path('products/<int:product_id>/', views.product_detail, name='product_detail'),
+    path('my-bids/', views.user_bids_list, name='user_bids_list'),
 
     # Admin Views
     path('admin/', lambda r: __import__('django.shortcuts').shortcuts.redirect('auctions:admin_login')),

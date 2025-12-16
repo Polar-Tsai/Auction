@@ -1,0 +1,34 @@
+{% extends 'base.html' %}
+{% block content %}
+<div class="max-w-4xl mx-auto bg-white p-6 rounded shadow">
+    <h1 class="text-2xl font-bold mb-6 border-b pb-2 text-gray-800">個人出價紀錄</h1>
+    
+    {% if bids %}
+    <div class="overflow-x-auto">
+        <table class="w-full text-left border-collapse">
+            <thead>
+                <tr class="bg-gray-100 text-gray-600 text-sm uppercas tracking-wider">
+                    <th class="p-4 border-b">日期時間</th>
+                    <th class="p-4 border-b">商品名稱</th>
+                    <th class="p-4 border-b">出價金額</th>
+                </tr>
+            </thead>
+            <tbody class="text-gray-700">
+                {% for bid in bids %}
+                <tr class="hover:bg-gray-50 border-b last:border-0 transition">
+                    <td class="p-4 text-sm">{{ bid.bid_timestamp|slice:":19"|replace:"T: " }}</td>
+                    <td class="p-4 font-medium">{{ bid.product_name }}</td>
+                    <td class="p-4 font-mono text-blue-600">NT$ {{ bid.amount }}</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+    {% else %}
+    <div class="text-center py-12 bg-gray-50 rounded border border-dashed border-gray-300">
+        <p class="text-gray-500 mb-2">您目前還沒有任何出價紀錄</p>
+        <a href="{% url 'auctions:products_list' %}" class="text-blue-600 hover:underline">前往瀏覽商品</a>
+    </div>
+    {% endif %}
+</div>
+{% endblock %}

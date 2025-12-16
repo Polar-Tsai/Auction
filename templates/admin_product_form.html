@@ -27,14 +27,14 @@
                     class="w-full border p-2 rounded" required />
             </div>
             <div>
-                <label class="block font-medium mb-1">狀態</label>
-                <select name="status" class="w-full border p-2 rounded">
-                    <option value="Upcoming" {% if product.status == 'Upcoming' or not product %}selected{% endif %}>
-                        Upcoming (未開始)</option>
-                    <option value="Active" {% if product.status == 'Active' %}selected{% endif %}>Active (進行中)</option>
-                    <option value="Ended" {% if product.status == 'Ended' %}selected{% endif %}>Ended (已結束)</option>
-                    <option value="Unsold" {% if product.status == 'Unsold' %}selected{% endif %}>Unsold (流標)</option>
-                </select>
+                <label class="block font-medium mb-1">特殊狀態</label>
+                <div class="flex items-center h-10">
+                    <input type="checkbox" name="is_unsold" id="is_unsold" value="true" 
+                        class="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
+                        {% if product.status == 'Unsold' %}checked{% endif %}>
+                    <label for="is_unsold" class="ml-2 text-gray-700">標記為流標 (Unsold)</label>
+                </div>
+                <p class="text-xs text-gray-500 mt-1">若未勾選，狀態將依據時間自動判斷 (未開始/進行中/已結標)。</p>
             </div>
         </div>
 
