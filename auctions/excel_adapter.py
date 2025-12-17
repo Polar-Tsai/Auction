@@ -91,6 +91,14 @@ class ExcelAdapter:
             return None
         product = res.iloc[0].to_dict()
         product['status'] = self._derive_status(product)
+        # Convert strings to datetime objects for template formatting
+        try:
+            if 'end_time' in product and isinstance(product['end_time'], str):
+                product['end_time'] = datetime.fromisoformat(product['end_time'].replace('Z', '+00:00')) if 'T' in product['end_time'] else datetime.strptime(product['end_time'], "%Y-%m-%d %H:%M")
+            if 'start_time' in product and isinstance(product['start_time'], str):
+                product['start_time'] = datetime.fromisoformat(product['start_time'].replace('Z', '+00:00')) if 'T' in product['start_time'] else datetime.strptime(product['start_time'], "%Y-%m-%d %H:%M")
+        except:
+            pass # Keep as strings if parse fails
         return product
 
     def get_employee_by_employeeId(self, employeeId):

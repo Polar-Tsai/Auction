@@ -3,63 +3,97 @@
 <div class="max-w-6xl mx-auto bg-white p-6 rounded-lg shadow-lg">
     <div id="toast-container" class="fixed top-4 right-4 z-50"></div>
 
-    <div class="grid grid-cols-1 md:grid-cols-2 gap-8 mb-8">
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-12 mb-12">
         <!-- Left: Image Section -->
-        <div class="bg-gray-100 rounded-lg h-96 flex items-center justify-center text-gray-400 overflow-hidden">
-            {% if product.image_url %}
-                 <img src="{{ product.image_url }}" alt="{{ product.name }}" class="w-full h-full object-cover">
-            {% else %}
-                 <span class="text-6xl">📷</span>
-            {% endif %}
+        <div>
+            <div class="bg-gray-100 rounded-lg aspect-square flex items-center justify-center text-gray-400 overflow-hidden mb-4 relative">
+                 <!-- Status Badge Top Right overlay if needed, but mockup shows it in text area sort of, let's keep it here or move it? Mockup has "競標中" top right of page? No, top right of info area. -->
+                {% if product.image_url %}
+                     <img src="{{ product.image_url }}" alt="{{ product.name }}" class="w-full h-full object-cover">
+                {% else %}
+                     <span class="text-6xl">📷</span>
+                {% endif %}
+            </div>
+            <!-- Thumbnails -->
+            <div class="grid grid-cols-3 gap-4">
+                <div class="aspect-square bg-gray-100 rounded border-2 border-blue-600 overflow-hidden">
+                    {% if product.image_url %}<img src="{{ product.image_url }}" class="w-full h-full object-cover">{% endif %}
+                </div>
+                <!-- Placeholders -->
+                <div class="aspect-square bg-gray-100 rounded overflow-hidden opacity-50">
+                    {% if product.image_url %}<img src="{{ product.image_url }}" class="w-full h-full object-cover">{% endif %}
+                </div>
+                <div class="aspect-square bg-gray-100 rounded overflow-hidden opacity-50">
+                    {% if product.image_url %}<img src="{{ product.image_url }}" class="w-full h-full object-cover">{% endif %}
+                </div>
+            </div>
         </div>
 
         <!-- Right: Info Section -->
-        <div class="flex flex-col justify-between">
-            <div>
-                <div class="flex justify-between items-start mb-4">
-                    <h1 class="text-3xl font-bold text-gray-900">{{ product.name }}</h1>
-                    <span id="status-display" class="px-3 py-1 rounded-full text-sm font-medium
-                        {% if product.status == 'Open' %}bg-green-100 text-green-800
-                        {% elif product.status == 'Upcoming' %}bg-blue-100 text-blue-800
-                        {% else %}bg-gray-100 text-gray-800{% endif %}">
-                        {{ product.status }}
+        <div class="flex flex-col">
+            <div class="mb-6 relative">
+                 <!-- Status Badge top right of this col -->
+                 <span id="status-display" class="absolute top-0 right-0 px-3 py-1 rounded-full text-sm font-medium
+                    {% if product.status == 'Open' %}bg-green-100 text-green-800
+                    {% elif product.status == 'Upcoming' %}bg-blue-100 text-blue-800
+                    {% else %}bg-gray-100 text-gray-800{% endif %}">
+                    {% if product.status == 'Open' %}競標中
+                    {% elif product.status == 'Upcoming' %}即將開始
+                    {% elif product.status == 'Closed' %}已結束
+                    {% elif product.status == 'Unsold' %}流標
+                    {% else %}{{ product.status }}{% endif %}
+                </span>
+
+                <h1 class="text-3xl font-bold text-gray-900 mb-6">拍賣品名稱</h1>
+                
+                <!-- Description -->
+                <div class="flex items-start mb-6">
+                    <span class="text-gray-900 font-bold whitespace-nowrap mr-8">AI 描述</span>
+                    <p class="text-gray-700 leading-relaxed max-w-lg">
+                        {{ product.description|default:"超稀有 2018 Topps Diamond Icons 日本傳奇 鈴木一朗 松井秀喜 紅版 雙人簽名卡 限量 2/5 紐約洋基 名人堂" }}
+                    </p>
+                </div>
+
+                <!-- Price Row -->
+                <div class="flex items-center mb-2">
+                    <span class="text-gray-900 font-bold whitespace-nowrap mr-8">目前價格</span>
+                    <div class="flex items-baseline gap-4">
+                        <span class="text-3xl font-bold text-blue-600">
+                            $<span id="current-price">{{ product.current_price|default:product.start_price }}</span>
+                        </span>
+                        <a href="#history" class="text-blue-500 underline text-sm"><span id="bids-count">{{ product.bids_count|default:0 }}</span>次出價</a>
+                    </div>
+                </div>
+
+                <!-- Highest Bidder Row -->
+                <div class="flex items-center mb-6">
+                    <span class="text-gray-900 font-bold whitespace-nowrap mr-6">最高出價者</span>
+                    <span class="text-gray-900 font-medium">
+                        {{ product.highest_bidder_id|default:"---" }}
                     </span>
                 </div>
-                
-                <div class="mb-6 space-y-2">
-                    <p class="text-gray-600">商品描述 (範例): 這是一件非常稀有的商品，請把握機會。</p>
-                    <p class="text-sm text-gray-500">截標時間: {{ product.end_time|slice:":10" }}</p>
+
+                <!-- Timer -->
+                <div class="flex items-center text-gray-800 mb-8">
+                     <!-- Bold Clock Icon -->
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                      <path stroke-linecap="round" stroke-linejoin="round" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                    </svg>
+                    <span id="countdown-text" class="text-lg font-medium">9時1分51秒結束</span> <!-- Will be JS updated -->
                 </div>
 
-                <div class="bg-gray-50 p-6 rounded-lg border border-gray-100 mb-6">
-                    <div class="text-sm text-gray-500 mb-1">目前最高價</div>
-                    <div class="text-5xl font-mono font-bold text-red-600 mb-2">
-                        NT$ <span id="current-price">{{ product.current_price|default:product.start_price }}</span>
-                    </div>
-                    <div class="flex justify-between text-sm text-gray-500">
-                        <span>起標: NT$ {{ product.start_price }}</span>
-                        <span>出價: <span id="bids-count">{{ product.bids_count|default:0 }}</span> 次</span>
-                    </div>
+                <!-- Bidding Area -->
+                <div class="bg-gray-200 p-6 rounded-lg flex items-center gap-4">
+                    {% if employee %}
+                        <input type="number" id="bid-amount" class="flex-1 bg-white border-0 py-3 px-4 outline-none shadow-sm text-center text-gray-600 rounded" placeholder="請輸入出價金額" />
+                        <button onclick="placeBid()" class="w-40 bg-gradient-to-b from-yellow-300 to-yellow-500 hover:from-yellow-400 hover:to-yellow-600 text-black font-bold py-3 rounded shadow-md border border-yellow-600 transform transition active:scale-95">
+                            出價
+                        </button>
+                    {% else %}
+                        <div class="w-full text-center text-gray-500">請先登入以出價</div>
+                    {% endif %}
                 </div>
             </div>
-
-            <!-- Action Section -->
-            {% if employee %}
-            <div class="space-y-3">
-                <label class="block text-sm font-medium text-gray-700">您要出價多少？</label>
-                <div class="flex gap-2">
-                    <input type="number" id="bid-amount" class="flex-1 border-2 border-gray-300 focus:border-blue-600 rounded px-4 py-2 outline-none text-lg" placeholder="輸入金額" />
-                    <button onclick="placeBid()" class="bg-red-600 hover:bg-red-700 text-white px-8 py-2 rounded font-bold text-lg transition shadow-md">
-                        出價
-                    </button>
-                </div>
-                <p class="text-xs text-gray-500">注意：出價即便視為契約成立，無法取消。</p>
-            </div>
-            {% else %}
-            <div class="bg-yellow-50 p-4 rounded text-center text-yellow-800 border border-yellow-200">
-                請先 <a href="{% url 'auctions:login' %}" class="underline font-bold hover:text-yellow-900">員工登入</a> 參與競標
-            </div>
-            {% endif %}
         </div>
     </div>
 
@@ -68,11 +102,11 @@
         <h3 class="text-xl font-bold mb-4 text-gray-800">出價歷史記錄 (最新 10 筆)</h3>
         <div class="overflow-x-auto">
             <table class="w-full text-left">
-                <thead class="bg-gray-50 text-gray-600 text-sm uppercase">
+                <thead class="bg-black text-white text-sm uppercase">
                     <tr>
-                        <th class="p-3">競標者</th>
-                        <th class="p-3">金額</th>
-                        <th class="p-3">時間</th>
+                        <th class="p-4 text-center">出價者</th>
+                        <th class="p-4 text-center">出價金額</th>
+                        <th class="p-4 text-center">出價時間</th>
                     </tr>
                 </thead>
                 <tbody id="bids-list" class="divide-y divide-gray-100">
@@ -86,7 +120,33 @@
 
 <script>
 const productId = {{ product.id }};
+const endTimeStr = "{{ product.end_time|date:'Y-m-d H:i:s' }}"; 
+// Note: Django date string might format slightly differently depending on settings, 
+// ensuring strict ISO-like for JS parsing is safer, but let's try standard JS parse first.
+// Ideally use: product.end_time.isoformat if available, or just standard string.
+// Given filter: date:"Y-m-d H:i:s" -> "2025-12-17 18:00:00" which JS Date() parses fine usually.
+
 const REFRESH_INTERVAL = 3000;
+
+function updateCountdown() {
+    const el = document.getElementById('countdown-text');
+    if (!el || !endTimeStr) return;
+    
+    const now = new Date().getTime();
+    const end = new Date(endTimeStr.replace(/-/g, "/")).getTime(); // Replace - with / for better cross-browser compatibility
+    const dist = end - now;
+    
+    if (dist < 0) {
+        el.innerText = "已結束";
+        return;
+    }
+    
+    const h = Math.floor(dist / (1000 * 60 * 60));
+    const m = Math.floor((dist % (1000 * 60 * 60)) / (1000 * 60));
+    const s = Math.floor((dist % (1000 * 60)) / 1000);
+    
+    el.innerText = `${h}時${m}分${s}秒結束`;
+}
 
 function showToast(message, type='info') {
     const container = document.getElementById('toast-container');
@@ -114,7 +174,7 @@ async function placeBid() {
     }
 
     try {
-        const res = await fetch('/place_bid/', {
+        const res = await fetch('/api/bids/', {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
@@ -141,7 +201,7 @@ async function placeBid() {
 
 async function pollData() {
     try {
-        const res = await fetch(`/products/${productId}/poll/`);
+        const res = await fetch(`/api/products/${productId}/poll/`);
         const data = await res.json();
         if (data.success) {
             // Update Price
@@ -157,10 +217,10 @@ async function pollData() {
                     // Simple formatting
                     const d = new Date(bid.bid_timestamp);
                     const dateStr = d.toLocaleString('zh-TW');
-                    list.innerHTML += `<tr class="hover:bg-gray-50 transition">
-                        <td class="p-3 font-medium text-gray-700">${bid.bidder_id}</td>
-                        <td class="p-3 font-mono text-red-600 font-bold">NT$ ${bid.amount}</td>
-                        <td class="p-3 text-gray-500 text-sm">${dateStr}</td>
+                    list.innerHTML += `<tr class="hover:bg-gray-50 transition border-b">
+                        <td class="p-4 text-center font-medium text-gray-700">${bid.bidder_id}</td>
+                        <td class="p-4 text-center font-medium text-gray-900">$${parseInt(bid.amount).toLocaleString()}</td>
+                        <td class="p-4 text-center text-gray-500 text-sm">${dateStr}</td>
                     </tr>`;
                 });
             } else {
@@ -174,6 +234,8 @@ async function pollData() {
 
 // Start polling
 setInterval(pollData, REFRESH_INTERVAL);
+setInterval(updateCountdown, 1000);
 pollData(); // Initial load
+updateCountdown();
 </script>
 {% endblock %}

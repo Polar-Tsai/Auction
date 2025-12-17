@@ -13,10 +13,10 @@
       <div class="text-lg font-bold">龍舟計畫 - 競拍網站</div>
       <div>
         {% if employee %}
-          <span class="mr-4 text-gray-600">歡迎，{{ employee.name }}</span>
-          <a href="{% url 'auctions:products_list' %}" class="mr-4 text-blue-600 hover:text-blue-800 font-medium">拍賣清單</a>
-          <a href="{% url 'auctions:user_bids_list' %}" class="mr-4 text-blue-600 hover:text-blue-800 font-medium">個人出價紀錄</a>
-          <a href="{% url 'auctions:logout' %}" class="text-sm text-gray-500 hover:text-gray-700">登出</a>
+          <span class="mr-4 text-gray-600">歡迎，{{ employee.name }}!</span>
+          <a href="{% url 'auctions:products_list' %}" class="mr-4 text-gray-800 hover:text-black font-medium">拍賣清單</a>
+          <a href="{% url 'auctions:user_bids_list' %}" class="mr-4 text-gray-800 hover:text-black font-medium">下標紀錄</a>
+          <a href="{% url 'auctions:logout' %}" class="text-gray-800 hover:text-black font-medium">登出</a>
         {% else %}
           <a href="{% url 'auctions:login' %}" class="mr-4 text-sm text-blue-600 font-bold">員工登入</a>
           <a href="{% url 'auctions:admin_login' %}" class="text-sm text-gray-500">管理員登入</a>
