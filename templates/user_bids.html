@@ -16,7 +16,7 @@
             <tbody class="text-gray-700">
                 {% for bid in bids %}
                 <tr class="hover:bg-gray-50 border-b last:border-0 transition">
-                    <td class="p-4 text-sm">{{ bid.bid_timestamp|slice:":19"|replace:"T: " }}</td>
+                    <td class="p-4 text-sm">{{ bid.bid_timestamp|slice:":10" }} {{ bid.bid_timestamp|slice:"11:19" }}</td>
                     <td class="p-4 font-medium">{{ bid.product_name }}</td>
                     <td class="p-4 font-mono text-blue-600">NT$ {{ bid.amount }}</td>
                 </tr>

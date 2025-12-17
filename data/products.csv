@@ -1,4 +1,5 @@
 id,name,start_price,current_price,status,start_time,end_time,last_bid_time,brand,description,image_url,bids_count,highest_bidder_id
-1,Sony PS5 Pro,24000,24000,,2025-12-01T10:00,2025-12-16T16:59:59,,,New Console,https://img.icons8.com/?size=100&id=UGjeZAvO94lh&format=png&color=000000,0,
-2,行動電源,100,100,,2025-12-15T10:00,2025-12-17T10:00,,,有八成新、全新,https://img.icons8.com/?size=256w&id=69679&format=png,0,
-3,電腦一台,81000,81000,Upcoming,2025-12-17T11:45,2025-12-17T14:46,,,非常好電腦,,0,
+1,Sony PS5 Pro,24000,24133,,2025-12-01T10:00,2025-12-16T16:59:59,2025-12-17T03:42:55.440169,,New Console,https://img.icons8.com/?size=100&id=UGjeZAvO94lh&format=png&color=000000,2,Testing User
+2,行動電源,100,150,,2025-12-15T10:00,2025-12-17T10:00,2025-12-17T03:43:40.491237,,有八成新、全新,https://img.icons8.com/?size=256w&id=69679&format=png,1,Testing User
+3,電腦一台,81000,81052,Upcoming,2025-12-17T11:45,2025-12-17T14:46,2025-12-17T13:24:49.333405,,非常好電腦,,3,0001
+4,正哥的鋼筆-1,200,200,Upcoming,2025-12-17T14:00,2025-12-10T13:13,,,,,0,

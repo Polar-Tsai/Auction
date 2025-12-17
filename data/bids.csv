@@ -1,1 +1,7 @@
-id,product_id,bidder_id,amount,bid_timestamp
+id,product_id,bidder_id,amount,bid_timestamp
+1,1,TestBot,24010,2025-12-17T03:42:09.020949
+2,1,Testing User,24133,2025-12-17T03:42:55.440169
+3,2,Testing User,150,2025-12-17T03:43:40.491237
+4,3,0001,81001,2025-12-17T11:55:56.816609
+5,3,Testing User,81051,2025-12-17T13:12:05.555343
+6,3,0001,81052,2025-12-17T13:24:49.333405

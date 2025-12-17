@@ -38,7 +38,7 @@ class BidService:
     def _validate_bid_rules(self, product, employee_id, amount):
         # Rule: Status must be active
         status = str(product.get('status', '')).lower().strip()
-        if status not in ['active', '進行中']:
+        if status not in ['active', 'open', '進行中']:
             raise BusinessException("Auction is not active", code='AUCTION_NOT_ACTIVE')
 
         # Rule: Amount checks

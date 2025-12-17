@@ -17,9 +17,9 @@
          data-start="{{ p.start_time }}">
        
        <!-- Image Section (Sky/Hill placeholder aesthetics if no image) -->
-       <div class="h-48 relative bg-blue-200 overflow-hidden">
-         {% if p.image_url %}
-            <img src="{{ p.image_url }}" alt="{{ p.name }}" class="w-full h-full object-cover">
+       <a href="{% url 'auctions:product_detail' p.id %}" class="block h-48 relative bg-blue-200 overflow-hidden cursor-pointer">
+         {% if p.main_image %}
+            <img src="{{ p.main_image }}" alt="{{ p.name }}" class="w-full h-full object-cover">
          {% else %}
             <!-- CSS Landscape Placeholder -->
             <div class="absolute inset-0 bg-blue-200">
@@ -32,11 +32,13 @@
                 <div class="absolute bottom-0 w-full h-1/4 bg-green-700 rounded-t-[40%] scale-125 translate-x-10 translate-y-4"></div>
             </div>
          {% endif %}
-       </div>
+       </a>
        
        <!-- Info Body -->
        <div class="p-4">
-         <h3 class="font-bold text-lg text-gray-900 mb-1 truncate" title="{{ p.name }}">{{ p.name }}</h3>
+         <a href="{% url 'auctions:product_detail' p.id %}" class="block hover:underline">
+             <h3 class="font-bold text-lg text-gray-900 mb-1 truncate" title="{{ p.name }}">{{ p.name }}</h3>
+         </a>
          
          <div class="mb-1">
            <div class="text-xs text-gray-500">目前價格</div>

@@ -39,8 +39,10 @@ def product_detail(request, product_id):
         product = adapter.get_product_by_id(product_id)
         if not product:
             return render(request, 'product_detail.html', {'error': '商品不存在'})
+        
+        images = adapter.get_product_images(product_id)
         employee = request.session.get('employee')
-        return render(request, 'product_detail.html', {'product': product, 'employee': employee})
+        return render(request, 'product_detail.html', {'product': product, 'images': images, 'employee': employee})
     except Exception as e:
         logger.error(f"Error loading product {product_id}", exc_info=True)
         return render(request, 'product_detail.html', {'error': '系統錯誤'})

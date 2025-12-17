@@ -14,7 +14,8 @@ class ExcelAdapter:
         # ensure files exist
         for p, cols in [
             (self.employees_path, ['id','employeeId','name','department']),
-            (self.products_path, ['id','name','start_price','current_price','status','start_time','end_time','last_bid_time','brand','description','image_url','bids_count','highest_bidder_id']),
+            (self.employees_path, ['id','employeeId','name','department']),
+            (self.products_path, ['id','name','start_price','current_price','status','start_time','end_time','last_bid_time','brand','description','bids_count','highest_bidder_id']),
             (self.bids_path, ['id','product_id','bidder_id','amount','bid_timestamp'])
         ]:
             if not os.path.exists(p):
@@ -52,7 +53,7 @@ class ExcelAdapter:
             return product.get('status', 'Upcoming')
 
         try:
-            now = datetime.utcnow()
+            now = datetime.now()
             # Handle ISO format Z or no Z
             start_time = datetime.fromisoformat(start_str.replace('Z', '+00:00')) if 'T' in start_str else datetime.strptime(start_str, "%Y-%m-%d %H:%M")
             end_time = datetime.fromisoformat(end_str.replace('Z', '+00:00')) if 'T' in end_str else datetime.strptime(end_str, "%Y-%m-%d %H:%M")
@@ -79,13 +80,21 @@ class ExcelAdapter:
 
     def get_all_products(self):
         df = pd.read_csv(self.products_path)
+        df = df.fillna('')
         products = df.to_dict(orient='records')
         for p in products:
             p['status'] = self._derive_status(p)
+            # Inject main image from local folder
+            imgs = self.get_product_images(p['id'])
+            if imgs:
+                p['main_image'] = f"/media/{p['id']}/{imgs[0]}"
+            else:
+                 p['main_image'] = None # View will handle fallback
         return products
 
     def get_product_by_id(self, product_id):
         df = pd.read_csv(self.products_path)
+        df = df.fillna('')
         res = df[df['id'] == int(product_id)]
         if res.empty:
             return None
@@ -100,6 +109,29 @@ class ExcelAdapter:
         except:
             pass # Keep as strings if parse fails
         return product
+
+    def get_product_images(self, product_id):
+        """
+        Scan data_photo/{product_id} directory for images.
+        Returns list of Media URL paths.
+        """
+        try:
+            photo_dir = os.path.join(self.data_dir, '..', 'data_photo', str(product_id))
+            if not os.path.exists(photo_dir):
+                return []
+            
+            files = sorted(os.listdir(photo_dir))
+            # Filter partial extension check or just simple one
+            images = [f for f in files if f.lower().endswith(('.png', '.jpg', '.jpeg', '.gif', '.webp'))]
+            
+            # Use settings.MEDIA_URL but we are in adapter, maybe strict dep on settings is fine or pass it in.
+            # Using relative path assuming usage with {{ MEDIA_URL }} or similar in template
+            # For simplicity, returning full relative URL path if we assume '/media/' prefix.
+            # But adapter shouldn't know URL config ideally.
+            # Let's return filenames, view can construct URL.
+            return images
+        except Exception:
+            return []
 
     def get_employee_by_employeeId(self, employeeId):
         try:
@@ -169,7 +201,7 @@ class ExcelAdapter:
 
             # Append bid
             new_id = 1 if df_bids.empty else int(df_bids['id'].max()) + 1
-            ts = datetime.utcnow().isoformat()
+            ts = datetime.now().isoformat()
             new_bid = {'id': new_id, 'product_id': int(product_id), 'bidder_id': employee_id, 'amount': amount, 'bid_timestamp': ts}
             
             # concat is preferred over append (deprecated) in newer pandas, but sticking to style if older.
@@ -215,8 +247,8 @@ class ExcelAdapter:
                 'bids_count': 0,
                 'highest_bidder_id': '',
                 'last_bid_time': '',
-                'start_time': datetime.utcnow().isoformat(),
-                'end_time': datetime.utcnow().isoformat() # Should be set by admin
+                'start_time': datetime.now().isoformat(),
+                'end_time': datetime.now().isoformat() # Should be set by admin
             }
             for k,v in defaults.items():
                 if k not in product_dict:

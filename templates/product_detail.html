@@ -7,27 +7,132 @@
         <!-- Left: Image Section -->
         <div>
             <div class="bg-gray-100 rounded-lg aspect-square flex items-center justify-center text-gray-400 overflow-hidden mb-4 relative">
-                 <!-- Status Badge Top Right overlay if needed, but mockup shows it in text area sort of, let's keep it here or move it? Mockup has "競標中" top right of page? No, top right of info area. -->
-                {% if product.image_url %}
-                     <img src="{{ product.image_url }}" alt="{{ product.name }}" class="w-full h-full object-cover">
-                {% else %}
+                <!-- Main Image -->
+                <img id="main-image" 
+                     src="{% if images %}/media/{{ product.id }}/{{ images.0 }}{% else %}{% endif %}" 
+                     alt="{{ product.name }}" 
+                     class="w-full h-full object-cover {% if not images %}hidden{% endif %}">
+                {% if not images %}
                      <span class="text-6xl">📷</span>
                 {% endif %}
             </div>
-            <!-- Thumbnails -->
-            <div class="grid grid-cols-3 gap-4">
-                <div class="aspect-square bg-gray-100 rounded border-2 border-blue-600 overflow-hidden">
-                    {% if product.image_url %}<img src="{{ product.image_url }}" class="w-full h-full object-cover">{% endif %}
+            
+            <!-- Thumbnails Carousel -->
+            {% if images %}
+            <div class="relative group mt-4 px-8"> <!-- px-8 to make room for arrows -->
+                <!-- Left Button -->
+                <button onclick="scrollThumbnails(-1)" id="carousel-left" class="absolute left-0 top-1/2 -translate-y-1/2 bg-white/80 hover:bg-white text-gray-800 rounded-full p-1 shadow-md border border-gray-200 z-10 hidden transition">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"></path></svg>
+                </button>
+
+                <!-- Carousel Viewport -->
+                <div class="overflow-hidden -mx-2"> <!-- Negative margin to offset item padding -->
+                    <div id="thumbnail-track" class="flex transition-transform duration-300 ease-out" style="transform: translateX(0%);">
+                        {% for img in images %}
+                        <div class="flex-none w-1/4 px-2 aspect-square cursor-pointer" 
+                             onclick="updateMainImage('/media/{{ product.id }}/{{ img }}')">
+                            <div class="w-full h-full rounded border border-transparent hover:border-blue-600 overflow-hidden bg-gray-100">
+                                <img src="/media/{{ product.id }}/{{ img }}" class="w-full h-full object-cover">
+                            </div>
+                        </div>
+                        {% endfor %}
+                    </div>
                 </div>
-                <!-- Placeholders -->
-                <div class="aspect-square bg-gray-100 rounded overflow-hidden opacity-50">
-                    {% if product.image_url %}<img src="{{ product.image_url }}" class="w-full h-full object-cover">{% endif %}
-                </div>
-                <div class="aspect-square bg-gray-100 rounded overflow-hidden opacity-50">
-                    {% if product.image_url %}<img src="{{ product.image_url }}" class="w-full h-full object-cover">{% endif %}
-                </div>
+
+                <!-- Right Button -->
+                <button onclick="scrollThumbnails(1)" id="carousel-right" class="absolute right-0 top-1/2 -translate-y-1/2 bg-white/80 hover:bg-white text-gray-800 rounded-full p-1 shadow-md border border-gray-200 z-10 hidden transition">
+                   <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path></svg>
+                </button>
             </div>
+            {% endif %}
         </div>
+        
+        <script>
+            let currentIndex = 0;
+            const VISIBLE_COUNT = 4;
+            const TOTAL_IMAGES = {{ images|length }};
+            
+            function updateMainImage(src) {
+                const img = document.getElementById('main-image');
+                img.src = src;
+                img.classList.remove('hidden');
+            }
+
+            function scrollThumbnails(direction) {
+                const track = document.getElementById('thumbnail-track');
+                const leftBtn = document.getElementById('carousel-left');
+                const rightBtn = document.getElementById('carousel-right');
+                
+                if (TOTAL_IMAGES <= VISIBLE_COUNT) return;
+
+                // Update index
+                const maxIndex = TOTAL_IMAGES - VISIBLE_COUNT;
+                currentIndex += direction;
+                
+                // Clamp
+                if (currentIndex < 0) currentIndex = 0;
+                if (currentIndex > maxIndex) currentIndex = maxIndex;
+
+                // Calculate move percentage
+                // Item width is calc(25% - 12px gap adjustment approx)
+                // Actually, flex gap is 1rem (16px).
+                // Let's rely on simple percentage moves: 100% / 4 = 25%.
+                // But we have gaps.
+                // Simpler approach: currentItem * (100% / VISIBLE_COUNT).
+                // Let's try transform percentage: -25% * currentIndex.
+                // But checking the gap logic: flex gap-4 (1rem).
+                // Width of item is roughly 25% minus gap share.
+                // Let's assume standard carousel logic:
+                // Move width including gap.
+                // Container width 100%. Item is roughly 22%.
+                // Let's use exact pixel calculation or cleaner percentage standard:
+                // If we assume container is 100%, and we show 4 items.
+                // Each step moves 25% width + gap adjustment? No that's complex.
+                // Better: item width = 100% / 4 = 25%.
+                // But we have 'gap-4'.
+                
+                // Let's re-style the item width to be exactly 25% if we remove gap or handle gap inside padding.
+                // Actually for simplicity, let's remove gap-4 and use p-2 on wrapper? No.
+                // Tailwind gap is easy but JS scroll calculation is harder.
+                // Let's change style to specific width logic?
+                // Let's try: Item width = calc((100% - (3 * 16px)) / 4).
+                // Move distance = Item width + 16px.
+                
+                // To keep it robust without complex calc, let's just use scrollLeft on container?
+                // Or use transform.
+                
+                const itemWidthPercent = 25; // Approximate
+                track.style.transform = `translateX(-${currentIndex * (100 / VISIBLE_COUNT)}%)`; 
+                // Wait, if flex gap is present, 25% move won't align perfectly.
+                // Let's remove flex gap-4 and use padding inside items to create spacing visual.
+                // See styling update below.
+
+                updateButtons();
+            }
+
+            function updateButtons() {
+                const leftBtn = document.getElementById('carousel-left');
+                const rightBtn = document.getElementById('carousel-right');
+                if(!leftBtn || !rightBtn) return;
+                
+                if (TOTAL_IMAGES <= VISIBLE_COUNT) {
+                    leftBtn.classList.add('hidden');
+                    rightBtn.classList.add('hidden');
+                } else {
+                    leftBtn.classList.remove('hidden');
+                    rightBtn.classList.remove('hidden');
+                    
+                    if (currentIndex <= 0) leftBtn.classList.add('opacity-50', 'cursor-not-allowed'); 
+                    else leftBtn.classList.remove('opacity-50', 'cursor-not-allowed');
+                    
+                    if (currentIndex >= (TOTAL_IMAGES - VISIBLE_COUNT)) rightBtn.classList.add('opacity-50', 'cursor-not-allowed');
+                    else rightBtn.classList.remove('opacity-50', 'cursor-not-allowed');
+                }
+            }
+            
+            // Init buttons on load
+            document.addEventListener('DOMContentLoaded', updateButtons);
+        </script>
 
         <!-- Right: Info Section -->
         <div class="flex flex-col">
