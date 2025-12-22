@@ -1,5 +1,6 @@
+{% load i18n %}
 <!doctype html>
-<html lang="zh-Hant">
+<html lang="{{ LANGUAGE_CODE }}">
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
@@ -10,17 +11,35 @@
 <body class="bg-gray-100 text-gray-900">
   <div class="container mx-auto p-4">
     <header class="flex justify-between items-center mb-4">
-      <div class="text-lg font-bold">龍舟計畫 - 競拍網站</div>
-      <div>
+      <div class="text-lg font-bold">龍舟計畫 - {% trans "競拍網站" %}</div>
+      <div class="flex items-center gap-4">
+        <!-- Language Switcher -->
+        <div class="flex items-center gap-2 text-sm border-r pr-4">
+          {% get_current_language as LANGUAGE_CODE %}
+          {% get_available_languages as LANGUAGES %}
+          {% for lang_code, lang_name in LANGUAGES %}
+            {% language lang_code %}
+              <a href="{% url 'auctions:products_list' %}" 
+                 class="{% if LANGUAGE_CODE == lang_code %}font-bold text-blue-600{% else %}text-gray-600 hover:text-gray-800{% endif %} transition"
+                 title="{{ lang_name }}">
+                {% if lang_code == 'zh-hant' %}🇹🇼 中文{% elif lang_code == 'id' %}🇮🇩 Indonesia{% endif %}
+              </a>
+            {% endlanguage %}
+          {% endfor %}
+        </div>
+        
+        <!-- User Navigation -->
+        <div>
         {% if employee %}
-          <span class="mr-4 text-gray-600">歡迎，{{ employee.name }}!</span>
-          <a href="{% url 'auctions:products_list' %}" class="mr-4 text-gray-800 hover:text-black font-medium">拍賣清單</a>
-          <a href="{% url 'auctions:user_bids_list' %}" class="mr-4 text-gray-800 hover:text-black font-medium">下標紀錄</a>
-          <a href="{% url 'auctions:logout' %}" class="text-gray-800 hover:text-black font-medium">登出</a>
+          <span class="mr-4 text-gray-600">{% trans "歡迎" %}，{{ employee.name }}!</span>
+          <a href="{% url 'auctions:products_list' %}" class="mr-4 text-gray-800 hover:text-black font-medium">{% trans "拍賣清單" %}</a>
+          <a href="{% url 'auctions:user_bids_list' %}" class="mr-4 text-gray-800 hover:text-black font-medium">{% trans "下標紀錄" %}</a>
+          <a href="{% url 'auctions:logout' %}" class="text-gray-800 hover:text-black font-medium">{% trans "登出" %}</a>
         {% else %}
-          <a href="{% url 'auctions:login' %}" class="mr-4 text-sm text-blue-600 font-bold">員工登入</a>
-          <a href="{% url 'auctions:admin_login' %}" class="text-sm text-gray-500">管理員登入</a>
+          <a href="{% url 'auctions:login' %}" class="mr-4 text-sm text-blue-600 font-bold">{% trans "員工登入" %}</a>
+          <a href="{% url 'auctions:admin_login' %}" class="text-sm text-gray-500">{% trans "管理員登入" %}</a>
         {% endif %}
+        </div>
       </div>
     </header>
     {% block content %}{% endblock %}

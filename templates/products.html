@@ -1,11 +1,12 @@
 {% extends 'base.html' %}
+{% load i18n %}
 {% block content %}
 <div class="mb-8">
   <!-- Tabs -->
   <div class="flex space-x-8 border-b border-gray-300 mb-6">
-    <button onclick="filterProducts('Open')" id="tab-Open" class="tab-btn px-2 py-2 text-blue-600 font-bold border-b-2 border-blue-600 focus:outline-none transition-colors">進行中</button>
-    <button onclick="filterProducts('Closed')" id="tab-Closed" class="tab-btn px-2 py-2 text-gray-600 hover:text-gray-800 focus:outline-none transition-colors border-b-2 border-transparent">已結標</button>
-    <button onclick="filterProducts('Upcoming')" id="tab-Upcoming" class="tab-btn px-2 py-2 text-gray-600 hover:text-gray-800 focus:outline-none transition-colors border-b-2 border-transparent">尚未開始</button>
+    <button onclick="filterProducts('Open')" id="tab-Open" class="tab-btn px-2 py-2 text-blue-600 font-bold border-b-2 border-blue-600 focus:outline-none transition-colors">{% trans "進行中" %}</button>
+    <button onclick="filterProducts('Closed')" id="tab-Closed" class="tab-btn px-2 py-2 text-gray-600 hover:text-gray-800 focus:outline-none transition-colors border-b-2 border-transparent">{% trans "已結標" %}</button>
+    <button onclick="filterProducts('Upcoming')" id="tab-Upcoming" class="tab-btn px-2 py-2 text-gray-600 hover:text-gray-800 focus:outline-none transition-colors border-b-2 border-transparent">{% trans "尚未開始" %}</button>
   </div>
   
   <!-- Products Grid -->
@@ -41,13 +42,13 @@
          </a>
          
          <div class="mb-1">
-           <div class="text-xs text-gray-500">目前價格</div>
+           <div class="text-xs text-gray-500">{% trans "目前價格" %}</div>
            <div class="flex justify-between items-baseline">
              <span class="text-2xl font-bold text-blue-600">
                 <!-- Simple comma formatting handled by intcomma if available, else standard -->
                 ${{ p.current_price|floatformat:0 }}
              </span>
-             <span class="text-xs text-gray-500">{{ p.bids_count|default:0 }}次出價</span>
+             <span class="text-xs text-gray-500">{{ p.bids_count|default:0 }}{% trans "次出價" %}</span>
            </div>
          </div>
          
@@ -61,15 +62,15 @@
          <div class="text-center">
            {% if p.status == 'Open' %}
              <a href="{% url 'auctions:product_detail' p.id %}" class="block w-full py-2 bg-gradient-to-b from-yellow-300 to-yellow-500 hover:from-yellow-400 hover:to-yellow-600 text-black font-bold rounded shadow-sm border border-yellow-600 text-sm">
-               出價
+               {% trans "出價" %}
              </a>
            {% elif p.status == 'Upcoming' %}
              <button disabled class="block w-full py-2 bg-gray-300 text-gray-600 font-bold rounded shadow-sm border border-gray-400 cursor-not-allowed text-sm">
-               尚未開標
+               {% trans "尚未開標" %}
              </button>
            {% else %}
              <button disabled class="block w-full py-2 bg-gray-300 text-gray-600 font-bold rounded shadow-sm border border-gray-400 cursor-not-allowed text-sm">
-               已結標
+               {% trans "已結標" %}
              </button>
            {% endif %}
          </div>
@@ -77,13 +78,24 @@
     </div>
     {% empty %}
     <div class="col-span-full text-center py-12 text-gray-500">
-      目前沒有商品
+      {% trans "目前沒有商品" %}
     </div>
     {% endfor %}
   </div>
 </div>
 
 <script>
+  // Translation strings from Django
+  const i18n = {
+    hour: "{% trans '時' %}",
+    minute: "{% trans '分' %}",
+    second: "{% trans '秒' %}",
+    end: "{% trans '結束' %}",
+    start: "{% trans '開始' %}",
+    ended: "{% trans '已結束' %}",
+    starting: "{% trans '即將開始' %}"
+  };
+
   function filterProducts(status) {
     // Update Tabs
     document.querySelectorAll('.tab-btn').forEach(btn => {
@@ -101,11 +113,6 @@
     let visibleCount = 0;
     cards.forEach(card => {
       const cardStatus = card.getAttribute('data-status');
-      // Simple logic: if status matches, show. 
-      // Note: Backend might use 'Closed' or just not 'Open'/'Upcoming'.
-      // If filtering for 'Closed', show anything not Open/Upcoming? Or explicit?
-      // Let's assume explicit status for now. 
-      // If cardStatus is not one of Open/Upcoming, we treat it as Closed?
       
       let show = false;
       if (status === 'Closed') {
@@ -135,24 +142,23 @@
         const end = new Date(endTimeStr).getTime();
         const dist = end - now;
         if (dist < 0) {
-          timerEl.innerText = '已結束';
+          timerEl.innerText = i18n.ended;
         } else {
-           // Calc hours, minutes, seconds
            const h = Math.floor(dist / (1000 * 60 * 60));
            const m = Math.floor((dist % (1000 * 60 * 60)) / (1000 * 60));
            const s = Math.floor((dist % (1000 * 60)) / 1000);
-           timerEl.innerText = `${h}時${m}分${s}秒結束`;
+           timerEl.innerText = `${h}${i18n.hour}${m}${i18n.minute}${s}${i18n.second}${i18n.end}`;
         }
       } else if (status === 'Upcoming' && startTimeStr) {
         const start = new Date(startTimeStr).getTime();
         const dist = start - now;
         if (dist < 0) {
-             timerEl.innerText = '即將開始'; // Or should be open?
+             timerEl.innerText = i18n.starting;
         } else {
            const h = Math.floor(dist / (1000 * 60 * 60));
            const m = Math.floor((dist % (1000 * 60 * 60)) / (1000 * 60));
            const s = Math.floor((dist % (1000 * 60)) / 1000);
-           timerEl.innerText = `${h}時${m}分${s}秒開始`;
+           timerEl.innerText = `${h}${i18n.hour}${m}${i18n.minute}${s}${i18n.second}${i18n.start}`;
         }
       } else {
         timerEl.innerText = '---';

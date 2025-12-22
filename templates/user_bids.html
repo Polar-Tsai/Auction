@@ -1,16 +1,17 @@
 {% extends 'base.html' %}
+{% load i18n %}
 {% block content %}
 <div class="max-w-4xl mx-auto bg-white p-6 rounded shadow">
-    <h1 class="text-2xl font-bold mb-6 border-b pb-2 text-gray-800">個人出價紀錄</h1>
+    <h1 class="text-2xl font-bold mb-6 border-b pb-2 text-gray-800">{% trans "個人出價紀錄" %}</h1>
     
     {% if bids %}
     <div class="overflow-x-auto">
         <table class="w-full text-left border-collapse">
             <thead>
                 <tr class="bg-gray-100 text-gray-600 text-sm uppercas tracking-wider">
-                    <th class="p-4 border-b">日期時間</th>
-                    <th class="p-4 border-b">商品名稱</th>
-                    <th class="p-4 border-b">出價金額</th>
+                    <th class="p-4 border-b">{% trans "日期時間" %}</th>
+                    <th class="p-4 border-b">{% trans "商品名稱" %}</th>
+                    <th class="p-4 border-b">{% trans "出價金額" %}</th>
                 </tr>
             </thead>
             <tbody class="text-gray-700">
@@ -26,8 +27,8 @@
     </div>
     {% else %}
     <div class="text-center py-12 bg-gray-50 rounded border border-dashed border-gray-300">
-        <p class="text-gray-500 mb-2">您目前還沒有任何出價紀錄</p>
-        <a href="{% url 'auctions:products_list' %}" class="text-blue-600 hover:underline">前往瀏覽商品</a>
+        <p class="text-gray-500 mb-2">{% trans "您目前還沒有任何出價紀錄" %}</p>
+        <a href="{% url 'auctions:products_list' %}" class="text-blue-600 hover:underline">{% trans "前往瀏覽商品" %}</a>
     </div>
     {% endif %}
 </div>

@@ -1,0 +1,161 @@
+# SOME DESCRIPTIVE TITLE.
+# Copyright (C) YEAR THE PACKAGE'S COPYRIGHT HOLDER
+# This file is distributed under the same license as the PACKAGE package.
+# FIRST AUTHOR <EMAIL@ADDRESS>, YEAR.
+#
+msgid ""
+msgstr ""
+"Project-Id-Version: \n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2025-12-22 14:00+0800\n"
+"PO-Revision-Date: 2025-12-22 14:00+0800\n"
+"Last-Translator: \n"
+"Language-Team: \n"
+"Language: id\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+
+# Navigation and General
+msgid "競拍網站"
+msgstr "Situs Lelang"
+
+msgid "歡迎"
+msgstr "Selamat datang"
+
+msgid "拍賣清單"
+msgstr "Daftar Lelang"
+
+msgid "下標紀錄"
+msgstr "Riwayat Penawaran"
+
+msgid "登出"
+msgstr "Keluar"
+
+msgid "員工登入"
+msgstr "Login Karyawan"
+
+msgid "管理員登入"
+msgstr "Login Admin"
+
+# Login Page
+msgid "工號"
+msgstr "ID Karyawan"
+
+msgid "請輸入工號 (例: 1305)"
+msgstr "Masukkan ID Karyawan (contoh: 1305)"
+
+# Product List Page
+msgid "進行中"
+msgstr "Sedang Berlangsung"
+
+msgid "已結標"
+msgstr "Selesai"
+
+msgid "尚未開始"
+msgstr "Belum Dimulai"
+
+msgid "目前價格"
+msgstr "Harga Saat Ini"
+
+msgid "次出價"
+msgstr "penawaran"
+
+msgid "出價"
+msgstr "Tawar"
+
+msgid "尚未開標"
+msgstr "Belum Dibuka"
+
+msgid "目前沒有商品"
+msgstr "Tidak ada produk saat ini"
+
+msgid "時"
+msgstr "jam"
+
+msgid "分"
+msgstr "menit"
+
+msgid "秒"
+msgstr "detik"
+
+msgid "結束"
+msgstr "selesai"
+
+msgid "開始"
+msgstr "dimulai"
+
+msgid "已結束"
+msgstr "Telah selesai"
+
+msgid "即將開始"
+msgstr "Akan segera dimulai"
+
+# Product Detail Page
+msgid "拍賣品名稱"
+msgstr "Nama Produk Lelang"
+
+msgid "AI 描述"
+msgstr "Deskripsi AI"
+
+msgid "最高出價者"
+msgstr "Penawar Tertinggi"
+
+msgid "請輸入出價金額"
+msgstr "Masukkan jumlah penawaran"
+
+msgid "請先登入以出價"
+msgstr "Silakan login untuk menawar"
+
+msgid "出價歷史記錄 (最新 10 筆)"
+msgstr "Riwayat Penawaran (10 Terbaru)"
+
+msgid "出價者"
+msgstr "Penawar"
+
+msgid "出價金額"
+msgstr "Jumlah Penawaran"
+
+msgid "出價時間"
+msgstr "Waktu Penawaran"
+
+msgid "載入中..."
+msgstr "Memuat..."
+
+msgid "目前尚無出價，成為第一個出價者！"
+msgstr "Belum ada penawaran, jadilah yang pertama!"
+
+msgid "競標中"
+msgstr "Sedang Lelang"
+
+msgid "流標"
+msgstr "Tidak Terjual"
+
+# User Bids Page
+msgid "個人出價紀錄"
+msgstr "Riwayat Penawaran Pribadi"
+
+msgid "日期時間"
+msgstr "Tanggal & Waktu"
+
+msgid "商品名稱"
+msgstr "Nama Produk"
+
+msgid "您目前還沒有任何出價紀錄"
+msgstr "Anda belum memiliki riwayat penawaran"
+
+msgid "前往瀏覽商品"
+msgstr "Lihat produk"
+
+# JavaScript Messages
+msgid "請輸入金額"
+msgstr "Silakan masukkan jumlah"
+
+msgid "出價成功！目前價格"
+msgstr "Penawaran berhasil! Harga saat ini"
+
+msgid "出價失敗"
+msgstr "Penawaran gagal"
+
+msgid "網路錯誤，請稍後重試"
+msgstr "Kesalahan jaringan, silakan coba lagi nanti"

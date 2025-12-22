@@ -13,6 +13,12 @@ environ.Env.read_env(os.path.join(BASE_DIR, '.env'))
 SECRET_KEY = os.getenv('DJANGO_SECRET_KEY', 'change-me')
 DEBUG = os.getenv('DEBUG', 'True') == 'True'
 ALLOWED_HOSTS = os.getenv('ALLOWED_HOSTS', '*').split(',')
+if 'test-auction.kingsteel.com' not in ALLOWED_HOSTS:
+    ALLOWED_HOSTS.append('test-auction.kingsteel.com')
+
+CSRF_TRUSTED_ORIGINS = [
+    'http://test-auction.kingsteel.com',
+]
 
 INSTALLED_APPS = [
     'django.contrib.admin',
@@ -27,6 +33,7 @@ INSTALLED_APPS = [
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
+    'django.middleware.locale.LocaleMiddleware',  # Add for i18n
     'django.middleware.common.CommonMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
     'django.contrib.auth.middleware.AuthenticationMiddleware',
@@ -62,10 +69,21 @@ DATABASES = {
     }
 }
 
-LANGUAGE_CODE = 'zh-hant'
+LANGUAGE_CODE = 'zh-hant'  # Default language
 TIME_ZONE = 'Asia/Taipei'
 USE_I18N = True
 USE_TZ = True
+
+# Supported languages
+LANGUAGES = [
+    ('zh-hant', '繁體中文'),
+    ('id', 'Bahasa Indonesia'),
+]
+
+# Path for translation files
+LOCALE_PATHS = [
+    BASE_DIR / 'locale',
+]
 
 STATIC_URL = '/static/'
 STATICFILES_DIRS = [BASE_DIR / 'static']
