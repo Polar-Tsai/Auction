@@ -3,4 +3,5 @@ pandas
 openpyxl
 portalocker
 django-environ
+python-dotenv
 waitress
