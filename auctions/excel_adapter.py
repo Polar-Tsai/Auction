@@ -79,7 +79,7 @@ class ExcelAdapter:
             return product.get('status', 'Upcoming')
 
     def get_all_products(self):
-        df = pd.read_csv(self.products_path)
+        df = pd.read_csv(self.products_path, encoding='utf-8-sig')
         df = df.fillna('')
         products = df.to_dict(orient='records')
         for p in products:
@@ -93,7 +93,7 @@ class ExcelAdapter:
         return products
 
     def get_product_by_id(self, product_id):
-        df = pd.read_csv(self.products_path)
+        df = pd.read_csv(self.products_path, encoding='utf-8-sig')
         df = df.fillna('')
         res = df[df['id'] == int(product_id)]
         if res.empty:
@@ -135,7 +135,7 @@ class ExcelAdapter:
 
     def get_employee_by_employeeId(self, employeeId):
         try:
-            df = pd.read_csv(self.employees_path, dtype=str)
+            df = pd.read_csv(self.employees_path, dtype=str, encoding='utf-8-sig')
             res = df[df['employeeId'] == str(employeeId)]
             if res.empty:
                 return None
@@ -144,12 +144,12 @@ class ExcelAdapter:
             return None
 
     def get_bids_for_product(self, product_id, limit=10):
-        df = pd.read_csv(self.bids_path)
+        df = pd.read_csv(self.bids_path, encoding='utf-8-sig')
         res = df[df['product_id'] == int(product_id)].sort_values('bid_timestamp', ascending=False)
         return res.head(limit).to_dict(orient='records')
 
     def get_bids_for_employee(self, employee_id):
-        df_bids = pd.read_csv(self.bids_path)
+        df_bids = pd.read_csv(self.bids_path, encoding='utf-8-sig')
         # Filter by bidder_id (employee_id should be string usually, but let's ensure type safety)
         # In save_bid we saved it as is. In login we stored it as string/from csv.
         # Let's ensure comparison works.
@@ -161,7 +161,7 @@ class ExcelAdapter:
         if not bids:
             return []
             
-        df_prod = pd.read_csv(self.products_path)
+        df_prod = pd.read_csv(self.products_path, encoding='utf-8-sig')
         # Create a map of id -> name
         prod_map = df_prod.set_index('id')['name'].to_dict()
         
