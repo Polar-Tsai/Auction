@@ -10,7 +10,7 @@
             <div class="bg-gray-100 rounded-lg aspect-square flex items-center justify-center text-gray-400 overflow-hidden mb-4 relative">
                 <!-- Main Image -->
                 <img id="main-image" 
-                     src="{% if images %}/media/{{ product.id }}/{{ images.0 }}{% else %}{% endif %}" 
+                     src="{% if images %}/data_photo/{{ product.id }}/{{ images.0 }}{% else %}{% endif %}" 
                      alt="{{ product.name }}" 
                      class="w-full h-full object-cover {% if not images %}hidden{% endif %}">
                 {% if not images %}
@@ -31,9 +31,9 @@
                     <div id="thumbnail-track" class="flex transition-transform duration-300 ease-out" style="transform: translateX(0%);">
                         {% for img in images %}
                         <div class="flex-none w-1/4 px-2 aspect-square cursor-pointer" 
-                             onclick="updateMainImage('/media/{{ product.id }}/{{ img }}')">
+                             onclick="updateMainImage('/data_photo/{{ product.id }}/{{ img }}')">
                             <div class="w-full h-full rounded border border-transparent hover:border-blue-600 overflow-hidden bg-gray-100">
-                                <img src="/media/{{ product.id }}/{{ img }}" class="w-full h-full object-cover">
+                                <img src="/data_photo/{{ product.id }}/{{ img }}" class="w-full h-full object-cover">
                             </div>
                         </div>
                         {% endfor %}
