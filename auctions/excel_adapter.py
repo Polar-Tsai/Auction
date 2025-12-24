@@ -87,7 +87,7 @@ class ExcelAdapter:
             # Inject main image from local folder
             imgs = self.get_product_images(p['id'])
             if imgs:
-                p['main_image'] = f"/media/{p['id']}/{imgs[0]}"
+                p['main_image'] = f"/data_photo/{p['id']}/{imgs[0]}"
             else:
                  p['main_image'] = None # View will handle fallback
         return products
