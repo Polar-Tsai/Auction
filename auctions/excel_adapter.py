@@ -84,15 +84,22 @@ class ExcelAdapter:
         products = df.to_dict(orient='records')
         for p in products:
             # Convert ID to int to prevent float issues with URL routing
-            if 'id' in p and p['id']:
-                p['id'] = int(p['id'])
+            # Handle empty strings and ensure value exists
+            if 'id' in p and p['id'] != '' and str(p['id']).strip():
+                try:
+                    p['id'] = int(float(p['id']))  # Convert via float first to handle "1.0"
+                except (ValueError, TypeError):
+                    pass  # Keep original value if conversion fails
             p['status'] = self._derive_status(p)
             # Inject main image from local folder
-            imgs = self.get_product_images(p['id'])
-            if imgs:
-                p['main_image'] = f"/data_photo/{p['id']}/{imgs[0]}"
+            if 'id' in p and p['id']:  # Only get images if ID is valid
+                imgs = self.get_product_images(p['id'])
+                if imgs:
+                    p['main_image'] = f"/data_photo/{p['id']}/{imgs[0]}"
+                else:
+                    p['main_image'] = None # View will handle fallback
             else:
-                 p['main_image'] = None # View will handle fallback
+                p['main_image'] = None
         return products
 
     def get_product_by_id(self, product_id):
