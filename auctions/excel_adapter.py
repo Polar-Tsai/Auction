@@ -83,6 +83,9 @@ class ExcelAdapter:
         df = df.fillna('')
         products = df.to_dict(orient='records')
         for p in products:
+            # Convert ID to int to prevent float issues with URL routing
+            if 'id' in p and p['id']:
+                p['id'] = int(p['id'])
             p['status'] = self._derive_status(p)
             # Inject main image from local folder
             imgs = self.get_product_images(p['id'])
