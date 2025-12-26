@@ -82,6 +82,7 @@ class ExcelAdapter:
         df = pd.read_csv(self.products_path, encoding='utf-8-sig')
         df = df.fillna('')
         products = df.to_dict(orient='records')
+        valid_products = []
         for p in products:
             # Convert ID to int to prevent float issues with URL routing
             # Handle empty strings and ensure value exists
@@ -89,18 +90,17 @@ class ExcelAdapter:
                 try:
                     p['id'] = int(float(p['id']))  # Convert via float first to handle "1.0"
                 except (ValueError, TypeError):
-                    pass  # Keep original value if conversion fails
-            p['status'] = self._derive_status(p)
-            # Inject main image from local folder
-            if 'id' in p and p['id']:  # Only get images if ID is valid
+                    continue  # Skip products with invalid IDs
+                    
+                p['status'] = self._derive_status(p)
+                # Inject main image from local folder
                 imgs = self.get_product_images(p['id'])
                 if imgs:
                     p['main_image'] = f"/data_photo/{p['id']}/{imgs[0]}"
                 else:
                     p['main_image'] = None # View will handle fallback
-            else:
-                p['main_image'] = None
-        return products
+                valid_products.append(p)
+        return valid_products
 
     def get_product_by_id(self, product_id):
         df = pd.read_csv(self.products_path, encoding='utf-8-sig')
