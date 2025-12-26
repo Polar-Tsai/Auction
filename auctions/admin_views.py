@@ -62,9 +62,9 @@ def admin_product_create(request):
             product_service.create_product(data)
             return redirect('auctions:admin_products_list')
         except Exception as e:
-            return render(request, 'admin_product_form.html', {'error': str(e), 'action': 'Create'})
+            return render(request, 'admin_product_form.html', {'error': str(e), 'action': 'Create', 'product': {}})
 
-    return render(request, 'admin_product_form.html', {'action': 'Create'})
+    return render(request, 'admin_product_form.html', {'action': 'Create', 'product': {}})
 
 def admin_product_edit(request, product_id):
     if not request.session.get('is_admin'):
