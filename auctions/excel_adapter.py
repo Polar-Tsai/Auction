@@ -236,8 +236,11 @@ class ExcelAdapter:
     def save_product(self, product_dict):
         f, df = self._lock_and_read(self.products_path)
         try:
-            # Generate ID
-            new_id = 1 if df.empty else int(df['id'].max()) + 1
+            # Generate ID - handle case where 'id' column might not exist
+            if df.empty or 'id' not in df.columns:
+                new_id = 1
+            else:
+                new_id = int(df['id'].max()) + 1
             product_dict['id'] = new_id
             
             # Default fields
