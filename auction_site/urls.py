@@ -3,10 +3,12 @@ from django.urls import path, include, re_path
 from django.conf.urls.i18n import i18n_patterns
 from django.conf import settings
 from django.views.static import serve
+from django.views.i18n import set_language
 
 # Media files served without language prefix
 urlpatterns = [
     re_path(r'^data_photo/(?P<path>.*)$', serve, {'document_root': settings.MEDIA_ROOT}),
+    path('i18n/setlang/', set_language, name='set_language'),
 ]
 
 # Language-specific URLs
