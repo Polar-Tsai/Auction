@@ -8,6 +8,7 @@ from django.views.i18n import set_language
 # Media files served without language prefix
 urlpatterns = [
     re_path(r'^data_photo/(?P<path>.*)$', serve, {'document_root': settings.MEDIA_ROOT}),
+    re_path(r'^static/(?P<path>.*)$', serve, {'document_root': settings.BASE_DIR / 'static'}),
     path('i18n/setlang/', set_language, name='set_language'),
 ]
 

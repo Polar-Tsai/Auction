@@ -156,12 +156,22 @@
                 </div>
 
                 <!-- Bidding Area -->
-                <div class="bg-gray-200 p-6 rounded-lg flex items-center gap-4">
+                <div class="{% if product.status == 'Open' %}bg-gray-200{% else %}bg-gray-100{% endif %} p-6 rounded-lg flex items-center gap-4">
                     {% if employee %}
-                        <input type="number" id="bid-amount" class="flex-1 bg-white border-0 py-3 px-4 outline-none shadow-sm text-center text-gray-600 rounded" placeholder="{% trans '請輸入出價金額' %}" />
-                        <button onclick="placeBid()" class="w-40 bg-gradient-to-b from-yellow-300 to-yellow-500 hover:from-yellow-400 hover:to-yellow-600 text-black font-bold py-3 rounded shadow-md border border-yellow-600 transform transition active:scale-95">
-                            {% trans "出價" %}
-                        </button>
+                        {% if product.status == 'Open' %}
+                            <input type="number" id="bid-amount" class="flex-1 bg-white border-0 py-3 px-4 outline-none shadow-sm text-center text-gray-600 rounded" placeholder="{% trans '請輸入出價金額' %}" />
+                            <button onclick="placeBid()" class="w-40 bg-gradient-to-b from-yellow-300 to-yellow-500 hover:from-yellow-400 hover:to-yellow-600 text-black font-bold py-3 rounded shadow-md border border-yellow-600 transform transition active:scale-95">
+                                {% trans "出價" %}
+                            </button>
+                        {% else %}
+                            <input type="number" class="flex-1 bg-gray-200 border-0 py-3 px-4 outline-none shadow-sm text-center text-gray-400 rounded cursor-not-allowed" placeholder="{% trans '請輸入出價金額' %}" disabled />
+                            <button class="w-40 bg-gray-300 text-gray-500 font-bold py-3 rounded shadow-md cursor-not-allowed" disabled>
+                                {% if product.status == 'Upcoming' %}{% trans "尚未開始" %}
+                                {% elif product.status == 'Closed' or product.status == 'Ended' %}{% trans "已結束" %}
+                                {% elif product.status == 'Unsold' %}{% trans "流標" %}
+                                {% else %}{% trans "無法出價" %}{% endif %}
+                            </button>
+                        {% endif %}
                     {% else %}
                         <div class="w-full text-center text-gray-500">{% trans "請先登入以出價" %}</div>
                     {% endif %}

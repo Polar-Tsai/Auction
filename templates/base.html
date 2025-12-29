@@ -1,4 +1,5 @@
 {% load i18n %}
+{% load static %}
 <!doctype html>
 <html lang="{{ LANGUAGE_CODE }}">
 <head>
@@ -92,20 +93,22 @@
   <div class="container mx-auto p-4">
     <!-- Desktop Header (Landscape) -->
     <header class="desktop-header justify-between items-center mb-4" style="display: none;">
-      <div class="text-lg font-bold">龍舟計畫 - {% trans "競拍網站" %}</div>
+      <a href="{% url 'auctions:products_list' %}" class="flex items-center gap-3 no-underline hover:opacity-80 transition">
+        <img src="{% static 'images/logo.svg' %}" alt="Logo" class="h-10 w-10">
+        <div class="text-lg font-bold text-gray-900">龍舟計畫 - {% trans "競拍網站" %}</div>
+      </a>
       <div class="flex items-center gap-4">
         <!-- Language Switcher -->
         <div class="flex items-center gap-2 text-sm border-r pr-4">
           {% get_current_language as LANGUAGE_CODE %}
           {% get_available_languages as LANGUAGES %}
           {% for lang_code, lang_name in LANGUAGES %}
-            {% language lang_code %}
-              <a href="{% url 'auctions:products_list' %}" 
-                 class="{% if LANGUAGE_CODE == lang_code %}font-bold text-blue-600{% else %}text-gray-600 hover:text-gray-800{% endif %} transition"
-                 title="{{ lang_name }}">
-                {% if lang_code == 'zh-hant' %}🇹🇼 中文{% elif lang_code == 'id' %}🇮🇩 Indonesia{% endif %}
-              </a>
-            {% endlanguage %}
+            <a href="#" 
+               onclick="switchLanguage('{{ lang_code }}'); return false;"
+               class="{% if LANGUAGE_CODE == lang_code %}font-bold text-blue-600{% else %}text-gray-600 hover:text-gray-800{% endif %} transition"
+               title="{{ lang_name }}">
+              {% if lang_code == 'zh-hant' %}🇹🇼 中文{% elif lang_code == 'id' %}🇮🇩 Indonesia{% endif %}
+            </a>
           {% endfor %}
         </div>
         
@@ -126,7 +129,10 @@
 
     <!-- Mobile Header (Portrait) -->
     <header class="mobile-header justify-between items-center mb-4" style="display: none;">
-      <div class="text-lg font-bold">龍舟計畫 - {% trans "競拍網站" %}</div>
+      <a href="{% url 'auctions:products_list' %}" class="flex items-center gap-2 no-underline hover:opacity-80 transition">
+        <img src="{% static 'images/logo.svg' %}" alt="Logo" class="h-8 w-8">
+        <div class="text-lg font-bold text-gray-900">龍舟計畫 - {% trans "競拍網站" %}</div>
+      </a>
       <button id="hamburger-btn" class="p-2">
         <!-- Hamburger Icon -->
         <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -153,7 +159,7 @@
 
         <div class="space-y-4">
           <!-- Language Selection -->
-          <div class="menu-item" onclick="event.stopPropagation()">
+          <div class="menu-item" onclick="toggleLanguageMenu(event)">
             <div class="menu-item-icon">
               <span class="text-2xl">🌐</span>
               <span class="font-medium">
@@ -162,8 +168,21 @@
               </span>
             </div>
             <svg class="w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path>
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
             </svg>
+          </div>
+          
+          <!-- Language Options (Hidden by default) -->
+          <div id="language-options" class="hidden ml-8 space-y-2">
+            {% get_current_language as LANGUAGE_CODE %}
+            {% get_available_languages as LANGUAGES %}
+            {% for lang_code, lang_name in LANGUAGES %}
+              <a href="#" 
+                 onclick="switchLanguage('{{ lang_code }}'); return false;"
+                 class="block py-2 px-4 rounded-lg hover:bg-gray-100 {% if LANGUAGE_CODE == lang_code %}font-bold text-blue-600{% else %}text-gray-700{% endif %}">
+                {% if lang_code == 'zh-hant' %}🇹🇼 中文{% elif lang_code == 'id' %}🇮🇩 Indonesia{% endif %}
+              </a>
+            {% endfor %}
           </div>
 
           <!-- Role Selection (User/Admin) -->
@@ -230,7 +249,27 @@
       </div>
     </div>
 
+    <!-- Hidden form for language switching -->
+    <form id="language-form" method="post" action="{% url 'set_language' %}" style="display: none;">
+      {% csrf_token %}
+      <input name="next" type="hidden" value="{{ request.path }}">
+      <input name="language" type="hidden" id="language-input">
+    </form>
+
     <script>
+      // Switch language function
+      function switchLanguage(langCode) {
+        document.getElementById('language-input').value = langCode;
+        document.getElementById('language-form').submit();
+      }
+
+      // Toggle language options in mobile menu
+      function toggleLanguageMenu(event) {
+        event.stopPropagation();
+        const languageOptions = document.getElementById('language-options');
+        languageOptions.classList.toggle('hidden');
+      }
+
       function openHamburgerMenu() {
         document.getElementById('hamburger-menu').classList.add('open');
         document.getElementById('hamburger-overlay').classList.add('open');
@@ -241,6 +280,8 @@
         document.getElementById('hamburger-menu').classList.remove('open');
         document.getElementById('hamburger-overlay').classList.remove('open');
         document.body.style.overflow = '';
+        // Also hide language options when closing menu
+        document.getElementById('language-options').classList.add('hidden');
       }
 
       // Hamburger button click handler
