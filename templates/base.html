@@ -7,10 +7,91 @@
   <title>Kingsteel Auction</title>
   <!-- Tailwind via CDN for scaffold -->
   <script src="https://cdn.tailwindcss.com"></script>
+  <style>
+    /* Orientation-based responsive design */
+    @media (orientation: portrait) {
+      .desktop-header {
+        display: none !important;
+      }
+      .mobile-header {
+        display: flex !important;
+      }
+    }
+    
+    @media (orientation: landscape) {
+      .desktop-header {
+        display: flex !important;
+      }
+      .mobile-header {
+        display: none !important;
+      }
+    }
+
+    /* Hamburger menu animations */
+    .hamburger-menu {
+      position: fixed;
+      top: 0;
+      right: -100%;
+      width: 80%;
+      max-width: 320px;
+      height: 100vh;
+      background: white;
+      box-shadow: -2px 0 10px rgba(0,0,0,0.1);
+      transition: right 0.3s ease-in-out;
+      z-index: 1001;
+    }
+    
+    .hamburger-menu.open {
+      right: 0;
+    }
+    
+    .hamburger-overlay {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100vh;
+      background: rgba(0,0,0,0.5);
+      opacity: 0;
+      visibility: hidden;
+      transition: opacity 0.3s, visibility 0.3s;
+      z-index: 1000;
+    }
+    
+    .hamburger-overlay.open {
+      opacity: 1;
+      visibility: visible;
+    }
+
+    /* Menu item styles */
+    .menu-item {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 16px 20px;
+      border: 1px solid #e5e7eb;
+      border-radius: 12px;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+    
+    .menu-item:hover {
+      background: #f9fafb;
+      border-color: #d1d5db;
+    }
+    
+    .menu-item-icon {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      font-size: 16px;
+    }
+  </style>
 </head>
 <body class="bg-gray-100 text-gray-900">
   <div class="container mx-auto p-4">
-    <header class="flex justify-between items-center mb-4">
+    <!-- Desktop Header (Landscape) -->
+    <header class="desktop-header justify-between items-center mb-4" style="display: none;">
       <div class="text-lg font-bold">龍舟計畫 - {% trans "競拍網站" %}</div>
       <div class="flex items-center gap-4">
         <!-- Language Switcher -->
@@ -42,6 +123,138 @@
         </div>
       </div>
     </header>
+
+    <!-- Mobile Header (Portrait) -->
+    <header class="mobile-header justify-between items-center mb-4" style="display: none;">
+      <div class="text-lg font-bold">龍舟計畫 - {% trans "競拍網站" %}</div>
+      <button id="hamburger-btn" class="p-2">
+        <!-- Hamburger Icon -->
+        <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"></path>
+        </svg>
+      </button>
+    </header>
+
+    <!-- Hamburger Menu Overlay -->
+    <div id="hamburger-overlay" class="hamburger-overlay" onclick="closeHamburgerMenu()"></div>
+
+    <!-- Hamburger Menu -->
+    <div id="hamburger-menu" class="hamburger-menu">
+      <div class="p-6 h-full overflow-y-auto">
+        <!-- Close Button -->
+        <div class="flex justify-between items-center mb-6">
+          <h2 class="text-xl font-bold">龍舟計畫 - {% trans "競拍網站" %}</h2>
+          <button onclick="closeHamburgerMenu()" class="p-2">
+            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+            </svg>
+          </button>
+        </div>
+
+        <div class="space-y-4">
+          <!-- Language Selection -->
+          <div class="menu-item" onclick="event.stopPropagation()">
+            <div class="menu-item-icon">
+              <span class="text-2xl">🌐</span>
+              <span class="font-medium">
+                {% get_current_language as CURRENT_LANG %}
+                {% if CURRENT_LANG == 'zh-hant' %}🇹🇼 中文{% elif CURRENT_LANG == 'id' %}🇮🇩 Indonesia{% endif %}
+              </span>
+            </div>
+            <svg class="w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path>
+            </svg>
+          </div>
+
+          <!-- Role Selection (User/Admin) -->
+          {% if employee %}
+            <!-- Show current role for logged-in employee -->
+            {% if employee.is_potential_admin %}
+              <!-- Admin-eligible employee can switch to Admin -->
+              <a href="{% url 'auctions:admin_login' %}" class="menu-item no-underline">
+                <div class="menu-item-icon">
+                  <span class="text-2xl">👤</span>
+                  <span class="font-medium">{% trans "切換到 Admin" %}</span>
+                </div>
+                <svg class="w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path>
+                </svg>
+              </a>
+            {% else %}
+              <!-- Regular employee, no switching option -->
+              <div class="menu-item opacity-50 cursor-default">
+                <div class="menu-item-icon">
+                  <span class="text-2xl">👤</span>
+                  <span class="font-medium">User</span>
+                </div>
+              </div>
+            {% endif %}
+          {% elif is_admin %}
+            <!-- Admin can switch to User -->
+            <a href="{% url 'auctions:login' %}" class="menu-item no-underline">
+              <div class="menu-item-icon">
+                <span class="text-2xl">👤</span>
+                <span class="font-medium">{% trans "切換到 User" %}</span>
+              </div>
+              <svg class="w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path>
+              </svg>
+            </a>
+          {% else %}
+            <!-- Not logged in, show User and link to login -->
+            <a href="{% url 'auctions:login' %}" class="menu-item no-underline">
+              <div class="menu-item-icon">
+                <span class="text-2xl">👤</span>
+                <span class="font-medium">User</span>
+              </div>
+              <svg class="w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path>
+              </svg>
+            </a>
+          {% endif %}
+
+          <!-- Navigation Links (if logged in as employee) -->
+          {% if employee %}
+            <hr class="my-4">
+            <a href="{% url 'auctions:products_list' %}" class="block py-3 px-4 hover:bg-gray-50 rounded-lg">
+              {% trans "拍賣清單" %}
+            </a>
+            <a href="{% url 'auctions:user_bids_list' %}" class="block py-3 px-4 hover:bg-gray-50 rounded-lg">
+              {% trans "下標紀錄" %}
+            </a>
+            <a href="{% url 'auctions:logout' %}" class="block py-3 px-4 hover:bg-gray-50 rounded-lg text-red-600">
+              {% trans "登出" %}
+            </a>
+          {% endif %}
+        </div>
+      </div>
+    </div>
+
+    <script>
+      function openHamburgerMenu() {
+        document.getElementById('hamburger-menu').classList.add('open');
+        document.getElementById('hamburger-overlay').classList.add('open');
+        document.body.style.overflow = 'hidden';
+      }
+
+      function closeHamburgerMenu() {
+        document.getElementById('hamburger-menu').classList.remove('open');
+        document.getElementById('hamburger-overlay').classList.remove('open');
+        document.body.style.overflow = '';
+      }
+
+      // Hamburger button click handler
+      const hamburgerBtn = document.getElementById('hamburger-btn');
+      if (hamburgerBtn) {
+        hamburgerBtn.addEventListener('click', openHamburgerMenu);
+      }
+
+      // Prevent menu clicks from closing the menu
+      document.getElementById('hamburger-menu').addEventListener('click', function(e) {
+        e.stopPropagation();
+      });
+    </script>
+
     {% block content %}{% endblock %}
   </div>
 </body>

@@ -70,7 +70,8 @@ def login_view(request):
                 'id': emp.get('id'),
                 'employeeId': emp.get('employeeId'), 
                 'name': emp.get('name'), 
-                'department': emp.get('department')
+                'department': emp.get('department'),
+                'is_potential_admin': emp.get('admin', 'False') == 'True'  # Parse admin field
             }
             return redirect('auctions:products_list')
         except BusinessException as e:
