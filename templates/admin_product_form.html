@@ -12,6 +12,14 @@
     </div>
     {% endif %}
 
+    {% if success %}
+    <div class="bg-green-100 border border-green-400 text-green-700 px-4 py-3 rounded mb-4">
+        {{ success }}
+    </div>
+    {% endif %}
+
+    {% if not product.id %}
+    <!-- 建立模式：顯示完整表單 -->
     <form method="post" class="bg-white p-6 rounded shadow space-y-6">
         {% csrf_token %}
 
@@ -20,29 +28,21 @@
             <input name="name" value="{{ product.name|default:'' }}" class="w-full border p-2 rounded" required />
         </div>
 
-        <div class="grid grid-cols-2 gap-4">
-            <div>
-                <label class="block font-medium mb-1">起標價格 (NT$) <span class="text-red-500">*</span></label>
-                <input name="start_price" type="number" min="1" value="{{ product.start_price|default:'' }}"
-                    class="w-full border p-2 rounded" required />
-            </div>
-            <div>
-                <label class="block font-medium mb-1">特殊狀態</label>
-                <div class="flex items-center h-10">
-                    <input type="checkbox" name="is_unsold" id="is_unsold" value="true" 
-                        class="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
-                        {% if product.status == 'Unsold' %}checked{% endif %}>
-                    <label for="is_unsold" class="ml-2 text-gray-700">標記為流標 (Unsold)</label>
-                </div>
-                <p class="text-xs text-gray-500 mt-1">若未勾選，狀態將依據時間自動判斷 (未開始/進行中/已結標)。</p>
-            </div>
+        <div>
+            <label class="block font-medium mb-1">起標價格 (NT$) <span class="text-red-500">*</span></label>
+            <input name="start_price" type="number" min="1" value="{{ product.start_price|default:'' }}"
+                class="w-full border p-2 rounded" required />
         </div>
 
         <div>
-            <label class="block font-medium mb-1">圖片 URL</label>
-            <input name="image_url" value="{{ product.image_url|default:'' }}" class="w-full border p-2 rounded"
-                placeholder="https://..." />
-            <p class="text-xs text-gray-500 mt-1">請輸入可公開存取的圖片連結 (Optional)</p>
+            <label class="block font-medium mb-1">特殊狀態</label>
+            <div class="flex items-center h-10">
+                <input type="checkbox" name="is_unsold" id="is_unsold" value="true" 
+                    class="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
+                    {% if product.status == 'Unsold' %}checked{% endif %}>
+                <label for="is_unsold" class="ml-2 text-gray-700">標記為流標 (Unsold)</label>
+            </div>
+            <p class="text-xs text-gray-500 mt-1">若未勾選，狀態將依據時間自動判斷 (未開始/進行中/已結標)。</p>
         </div>
 
         <div>
@@ -53,14 +53,14 @@
 
         <div class="grid grid-cols-2 gap-4">
             <div>
-                <label class="block font-medium mb-1">開始時間</label>
+                <label class="block font-medium mb-1">開始時間 <span class="text-red-500">*</span></label>
                 <input name="start_time" type="datetime-local" value="{{ product.start_time|default:'' }}"
-                    class="w-full border p-2 rounded" />
+                    class="w-full border p-2 rounded" required />
             </div>
             <div>
-                <label class="block font-medium mb-1">結束時間</label>
+                <label class="block font-medium mb-1">結束時間 <span class="text-red-500">*</span></label>
                 <input name="end_time" type="datetime-local" value="{{ product.end_time|default:'' }}"
-                    class="w-full border p-2 rounded" />
+                    class="w-full border p-2 rounded" required />
             </div>
         </div>
 
@@ -70,5 +70,468 @@
             <button class="px-6 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 font-bold">保存商品</button>
         </div>
     </form>
+    {% else %}
+    <!-- 編輯模式：顯示基本資料表單和圖片管理 -->
+    
+    <!-- 基本資料表單 -->
+    <form method="post" class="bg-white p-6 rounded shadow space-y-6 mb-6">
+        {% csrf_token %}
+
+        <h2 class="text-xl font-bold border-b pb-2">產品基本資料</h2>
+
+        <div>
+            <label class="block font-medium mb-1">商品名稱 <span class="text-red-500">*</span></label>
+            <input name="name" value="{{ product.name|default:'' }}" class="w-full border p-2 rounded" required />
+        </div>
+
+        <div>
+            <label class="block font-medium mb-1">起標價格 (NT$) <span class="text-red-500">*</span></label>
+            <input name="start_price" type="number" min="1" value="{{ product.start_price|default:'' }}"
+                class="w-full border p-2 rounded" required />
+        </div>
+
+        <div>
+            <label class="block font-medium mb-1">特殊狀態</label>
+            <div class="flex items-center h-10">
+                <input type="checkbox" name="is_unsold" id="is_unsold" value="true" 
+                    class="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
+                    {% if product.status == 'Unsold' %}checked{% endif %}>
+                <label for="is_unsold" class="ml-2 text-gray-700">標記為流標 (Unsold)</label>
+            </div>
+            <p class="text-xs text-gray-500 mt-1">若未勾選，狀態將依據時間自動判斷 (未開始/進行中/已結標)。</p>
+        </div>
+
+        <div>
+            <label class="block font-medium mb-1">商品描述</label>
+            <textarea name="description" rows="4"
+                class="w-full border p-2 rounded">{{ product.description|default:'' }}</textarea>
+        </div>
+
+        <div class="grid grid-cols-2 gap-4">
+            <div>
+                <label class="block font-medium mb-1">開始時間 <span class="text-red-500">*</span></label>
+                <input name="start_time" type="datetime-local" value="{{ product.start_time|default:'' }}"
+                    class="w-full border p-2 rounded" required />
+            </div>
+            <div>
+                <label class="block font-medium mb-1">結束時間 <span class="text-red-500">*</span></label>
+                <input name="end_time" type="datetime-local" value="{{ product.end_time|default:'' }}"
+                    class="w-full border p-2 rounded" required />
+            </div>
+        </div>
+
+        <div class="pt-4 border-t flex justify-end gap-3">
+            <a href="{% url 'auctions:admin_products_list' %}"
+                class="px-4 py-2 border rounded text-gray-700 hover:bg-gray-50">取消</a>
+            <button class="px-6 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 font-bold">保存商品</button>
+        </div>
+    </form>
+    
+    <!-- 圖片管理區塊 -->
+    <div class="bg-white p-6 rounded shadow">
+        <!-- 隱藏的 CSRF token for 圖片上傳 -->
+        {% csrf_token %}
+        
+        <h2 class="text-xl font-bold mb-4 flex items-center gap-2">
+            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"></path>
+            </svg>
+            產品圖片管理
+        </h2>
+
+        <!-- 檔案選擇 -->
+        <div class="mb-4">
+            <label class="block font-medium mb-2">選擇圖片 (支援 JPG, PNG)</label>
+            <input type="file" id="imageInput" accept=".jpg,.jpeg,.png" multiple 
+                class="block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100" />
+            <p class="text-xs text-gray-500 mt-1">可一次選擇多張圖片，支援拖放排序和點擊刪除</p>
+        </div>
+
+        <!-- 圖片預覽區 -->
+        <div id="imagePreviewContainer" class="border-2 border-dashed border-gray-300 rounded-lg p-4 min-h-[200px]">
+            <div id="imageList" class="grid grid-cols-3 gap-4">
+                <!-- 圖片將動態添加到這裡 -->
+            </div>
+            <p id="emptyMessage" class="text-center text-gray-400 py-8">尚無圖片，請選擇檔案上傳</p>
+        </div>
+
+        <!-- 上傳按鈕 -->
+        <div class="mt-4 flex justify-end">
+            <button type="button" id="uploadImagesBtn" 
+                class="px-6 py-2 bg-green-600 text-white rounded hover:bg-green-700 font-bold disabled:bg-gray-400 disabled:cursor-not-allowed"
+                disabled>
+                確認上傳圖片
+            </button>
+        </div>
+
+        <!-- 上傳進度提示 -->
+        <div id="uploadProgress" class="hidden mt-4">
+            <div class="bg-blue-50 border border-blue-200 text-blue-700 px-4 py-3 rounded">
+                <span id="progressText">正在上傳...</span>
+            </div>
+        </div>
+    </div>
+
+    <script>
+    // 圖片管理 JavaScript
+    let imageFiles = []; // 儲存新選擇的檔案
+    let existingImages = []; // 儲存現有圖片
+    let imagesToDelete = []; // 標記要刪除的圖片
+    let draggedElement = null;
+    let draggedIndex = null;
+    let renderingId = 0; // 用於防止過時的渲染回調
+
+    // 初始化：載入現有圖片
+    window.addEventListener('DOMContentLoaded', () => {
+        loadExistingImages();
+    });
+
+    // 載入現有圖片
+    function loadExistingImages() {
+        // 使用 window.location.pathname 提取語言前綴
+        const langPrefix = window.location.pathname.split('/')[1]; // 例如 'zh-hant'
+        fetch(`/${langPrefix}/api/products/{{ product.id }}/images/`)
+            .then(res => res.json())
+            .then(data => {
+                if (data.success && data.images.length > 0) {
+                    existingImages = data.images;
+                    renderImages();
+                }
+            })
+            .catch(err => console.error('載入圖片失敗:', err));
+    }
+
+    // 檔案選擇事件
+    document.getElementById('imageInput').addEventListener('change', (e) => {
+        const files = Array.from(e.target.files);
+        files.forEach(file => {
+            if (file.type === 'image/jpeg' || file.type === 'image/png') {
+                imageFiles.push(file);
+            }
+        });
+        renderImages();
+        e.target.value = ''; // 重置 input
+    });
+
+    // 渲染圖片預覽（使用 Promise.all 避免重複）
+    function renderImages() {
+        const container = document.getElementById('imageList');
+        const emptyMsg = document.getElementById('emptyMessage');
+        const uploadBtn = document.getElementById('uploadImagesBtn');
+        
+        // 增加渲染 ID，使舊的回調失效
+        const currentRenderingId = ++renderingId;
+        
+        container.innerHTML = '';
+        
+        const totalImages = existingImages.filter(img => !imagesToDelete.includes(img.filename)).length + imageFiles.length;
+        
+        if (totalImages === 0) {
+            emptyMsg.classList.remove('hidden');
+            uploadBtn.disabled = true;
+            return;
+        }
+        
+        emptyMsg.classList.add('hidden');
+        uploadBtn.disabled = (imageFiles.length === 0 && imagesToDelete.length === 0);
+        
+        let globalIndex = 0;
+        
+        // 顯示現有圖片
+        existingImages.forEach((img) => {
+            if (imagesToDelete.includes(img.filename)) return;
+            
+            const div = createImageCard(img.url, img.filename, globalIndex, 'existing', -1);
+            container.appendChild(div);
+            globalIndex++;
+        });
+        
+        // 使用 Promise.all 同步渲染所有新圖片
+        const readerPromises = imageFiles.map((file, fileIndex) => {
+            return new Promise((resolve) => {
+                const reader = new FileReader();
+                reader.onload = (e) => {
+                    // 只有當前渲染 ID 匹配時才處理
+                    if (currentRenderingId === renderingId) {
+                        resolve({
+                            src: e.target.result,
+                            filename: file.name,
+                            displayIndex: globalIndex + fileIndex,
+                            actualIndex: fileIndex
+                        });
+                    } else {
+                        resolve(null); // 過時的渲染，忽略
+                    }
+                };
+                reader.readAsDataURL(file);
+            });
+        });
+        
+        // 等待所有圖片讀取完成後一次性添加
+        Promise.all(readerPromises).then((results) => {
+            if (currentRenderingId !== renderingId) return; // 再次檢查
+            
+            results.forEach((result) => {
+                if (result) {
+                    const div = createImageCard(result.src, result.filename, result.displayIndex, 'new', result.actualIndex);
+                    container.appendChild(div);
+                }
+            });
+        });
+    }
+
+    // 創建圖片卡片
+    function createImageCard(src, filename, displayIndex, type, actualIndex) {
+        const div = document.createElement('div');
+        div.className = 'relative border rounded-lg overflow-hidden bg-gray-100 group';
+        div.draggable = (type === 'new');
+        div.dataset.displayIndex = displayIndex;
+        div.dataset.actualIndex = actualIndex;
+        div.dataset.type = type;
+        div.dataset.filename = filename;
+        
+        div.innerHTML = `
+            <div class="aspect-square">
+                <img src="${src}" class="w-full h-full object-cover" alt="${filename}">
+            </div>
+            <div class="absolute top-2 left-2 bg-blue-600 text-white text-xs px-2 py-1 rounded font-bold">
+                ${displayIndex + 1}
+            </div>
+            ${type === 'existing' ? '<div class="absolute top-2 left-12 bg-gray-600 text-white text-xs px-2 py-1 rounded">已上傳</div>' : ''}
+            <button type="button" class="delete-btn absolute top-2 right-2 bg-red-600 text-white p-1.5 rounded-full transition hover:bg-red-700 z-10">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                </svg>
+            </button>
+            <div class="absolute bottom-0 left-0 right-0 bg-black bg-opacity-50 text-white text-xs p-1 text-center truncate">
+                ${filename}
+            </div>
+            ${type === 'new' ? `<div class="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition cursor-move pointer-events-none">
+                <svg class="w-8 h-8 text-white drop-shadow-lg" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 9l4-4 4 4m0 6l-4 4-4-4"></path>
+                </svg>
+            </div>` : ''}
+        `;
+        
+        // 刪除按鈕事件
+        const deleteBtn = div.querySelector('.delete-btn');
+        deleteBtn.addEventListener('click', (e) => {
+            e.stopPropagation();
+            e.preventDefault();
+            deleteImage(type, filename);
+        });
+        
+        // 拖放事件（只有新圖片才綁定）
+        if (type === 'new') {
+            div.addEventListener('dragstart', handleDragStart);
+            div.addEventListener('dragover', handleDragOver);
+            div.addEventListener('drop', handleDrop);
+            div.addEventListener('dragend', handleDragEnd);
+            
+            // 觸控事件支援（手機端）
+            div.addEventListener('touchstart', handleTouchStart, {passive: false});
+            div.addEventListener('touchmove', handleTouchMove, {passive: false});
+            div.addEventListener('touchend', handleTouchEnd);
+        }
+        
+        return div;
+    }
+
+    // 刪除圖片
+    function deleteImage(type, filename) {
+        if (type === 'existing') {
+            if (!imagesToDelete.includes(filename)) {
+                imagesToDelete.push(filename);
+            }
+        } else {
+            const fileIndex = imageFiles.findIndex(f => f.name === filename);
+            if (fileIndex !== -1) {
+                imageFiles.splice(fileIndex, 1);
+            }
+        }
+        renderImages();
+    }
+
+    // 桌面端拖放
+    function handleDragStart(e) {
+        const element = e.currentTarget;
+        if (element.dataset.type !== 'new') {
+            e.preventDefault();
+            return;
+        }
+        draggedElement = element;
+        draggedIndex = parseInt(element.dataset.actualIndex);
+        element.style.opacity = '0.5';
+        e.dataTransfer.effectAllowed = 'move';
+    }
+
+    function handleDragOver(e) {
+        if (e.currentTarget.dataset.type !== 'new') {
+            return;
+        }
+        e.preventDefault();
+        e.dataTransfer.dropEffect = 'move';
+        return false;
+    }
+
+    function handleDrop(e) {
+        e.preventDefault();
+        e.stopPropagation();
+        
+        if (!draggedElement || e.currentTarget.dataset.type !== 'new') {
+            return false;
+        }
+        
+        const dropElement = e.currentTarget;
+        const dropIndex = parseInt(dropElement.dataset.actualIndex);
+        
+        if (draggedIndex !== dropIndex && draggedIndex !== null && dropIndex >= 0) {
+            // 重新排列 imageFiles 陣列
+            const [item] = imageFiles.splice(draggedIndex, 1);
+            imageFiles.splice(dropIndex, 0, item);
+            renderImages();
+        }
+        return false;
+    }
+
+    function handleDragEnd(e) {
+        e.currentTarget.style.opacity = '1';
+        draggedElement = null;
+        draggedIndex = null;
+    }
+
+    // 手機端觸控支援（優化版，不觸發重新渲染）
+    let touchX = 0, touchY = 0;
+    let isDragging = false;
+    let touchTarget = null;
+    let touchStartIndex = null;
+
+    function handleTouchStart(e) {
+        const element = e.currentTarget;
+        if (element.dataset.type !== 'new') {
+            return;
+        }
+        touchTarget = element;
+        const touch = e.touches[0];
+        touchX = touch.clientX;
+        touchY = touch.clientY;
+        touchStartIndex = parseInt(element.dataset.actualIndex);
+        isDragging = true;
+        element.style.opacity = '0.5';
+    }
+
+    function handleTouchMove(e) {
+        if (!isDragging || !touchTarget || touchTarget.dataset.type !== 'new') return;
+        e.preventDefault();
+        
+        const touch = e.touches[0];
+        const elementBelow = document.elementFromPoint(touch.clientX, touch.clientY);
+        const dropCard = elementBelow?.closest('[data-actual-index]');
+        
+        if (dropCard && dropCard !== touchTarget && dropCard.dataset.type === 'new') {
+            const dropIndex = parseInt(dropCard.dataset.actualIndex);
+            if (touchStartIndex !== dropIndex && dropIndex >= 0) {
+                // 直接操作 DOM 位置，不重新渲染
+                const container = touchTarget.parentElement;
+                if (dropIndex < touchStartIndex) {
+                    container.insertBefore(touchTarget, dropCard);
+                } else {
+                    container.insertBefore(touchTarget, dropCard.nextSibling);
+                }
+                
+                // 更新陣列
+                const [item] = imageFiles.splice(touchStartIndex, 1);
+                imageFiles.splice(dropIndex, 0, item);
+                touchStartIndex = dropIndex;
+                
+                // 更新顯示索引（不觸發完整重渲染）
+                updateDisplayIndexes();
+            }
+        }
+    }
+
+    function handleTouchEnd(e) {
+        if (touchTarget) {
+            touchTarget.style.opacity = '1';
+        }
+        isDragging = false;
+        touchTarget = null;
+        touchStartIndex = null;
+    }
+
+    // 更新顯示索引（輕量級更新，不重渲染）
+    function updateDisplayIndexes() {
+        const container = document.getElementById('imageList');
+        const cards = Array.from(container.children);
+        cards.forEach((card, index) => {
+            const indexBadge = card.querySelector('.bg-blue-600');
+            if (indexBadge) {
+                indexBadge.textContent = index + 1;
+            }
+            card.dataset.displayIndex = index;
+        });
+    }
+
+    // 上傳圖片
+    document.getElementById('uploadImagesBtn').addEventListener('click', async () => {
+        const progressDiv = document.getElementById('uploadProgress');
+        const progressText = document.getElementById('progressText');
+        const uploadBtn = document.getElementById('uploadImagesBtn');
+        
+        uploadBtn.disabled = true;
+        progressDiv.classList.remove('hidden');
+        progressText.textContent = '正在上傳圖片...';
+        
+        const formData = new FormData();
+        
+        // 添加新圖片
+        imageFiles.forEach((file) => {
+            formData.append('images', file);
+        });
+        
+        // 添加要刪除的圖片
+        imagesToDelete.forEach(filename => {
+            formData.append('delete_images', filename);
+        });
+        
+        try {
+            const langPrefix = window.location.pathname.split('/')[1];
+            const response = await fetch(`/${langPrefix}/api/products/{{ product.id }}/upload-images/`, {
+                method: 'POST',
+                body: formData,
+                headers: {
+                    'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value
+                }
+            });
+            
+            const data = await response.json();
+            
+            if (data.success) {
+                progressText.textContent = `✓ 成功上傳 ${data.uploaded_count} 張圖片，刪除 ${data.deleted_count} 張圖片`;
+                progressDiv.querySelector('div').className = 'bg-green-50 border border-green-200 text-green-700 px-4 py-3 rounded';
+                
+                // 重置狀態
+                imageFiles = [];
+                imagesToDelete = [];
+                existingImages = [];  // 清空現有圖片列表，避免重複
+                
+                // 重新載入圖片
+                setTimeout(() => {
+                    loadExistingImages();
+                    progressDiv.classList.add('hidden');
+                }, 2000);
+            } else {
+                progressText.textContent = '✗ 上傳失敗: ' + data.message;
+                progressDiv.querySelector('div').className = 'bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded';
+                uploadBtn.disabled = false;
+            }
+        } catch (error) {
+            progressText.textContent = '✗ 上傳錯誤: ' + error.message;
+            progressDiv.querySelector('div').className = 'bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded';
+            uploadBtn.disabled = false;
+        }
+    });
+    </script>
+    {% endif %}
 </div>
 {% endblock %}

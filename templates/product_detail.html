@@ -266,7 +266,8 @@ async function placeBid() {
     }
 
     try {
-        const res = await fetch('/api/bids/', {
+        const langPrefix = window.location.pathname.split('/')[1];
+        const res = await fetch(`/${langPrefix}/api/bids/`, {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
@@ -291,7 +292,8 @@ async function placeBid() {
 
 async function pollData() {
     try {
-        const res = await fetch(`/api/products/${productId}/poll/`);
+        const langPrefix = window.location.pathname.split('/')[1];
+        const res = await fetch(`/${langPrefix}/api/products/${productId}/poll/`);
         const data = await res.json();
         if (data.success) {
             // Update Price

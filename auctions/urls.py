@@ -27,4 +27,6 @@ urlpatterns = [
     # API endpoints
     path('api/products/<int:product_id>/poll/', views.product_poll, name='product_poll'),
     path('api/bids/', views.place_bid, name='place_bid'),
+    path('api/products/<int:product_id>/images/', admin_views.get_product_images, name='get_product_images'),
+    path('api/products/<int:product_id>/upload-images/', admin_views.upload_product_images, name='upload_product_images'),
 ]
