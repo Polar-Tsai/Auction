@@ -72,7 +72,7 @@ class ExcelAdapter:
             if now < start_time:
                 return 'Upcoming'
             elif now > end_time:
-                return 'Ended' # Closed
+                return 'Closed' # Closed
             else:
                 return 'Open' # Active
         except Exception:

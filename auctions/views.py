@@ -27,11 +27,61 @@ def index(request):
 def products_list(request):
     try:
         products = adapter.get_all_products()
+        
+        
+        # Add highest bidder and winner information for all products
+        for product in products:
+            # Get the highest bid for this product
+            bids = adapter.get_bids_for_product(product['id'], limit=1)
+            
+            if bids:
+                bidder_id = bids[0].get('bidder_id')
+                # For all products: store highest bidder ID (工號)
+                product['highest_bidder_id'] = bidder_id
+                
+                #  For closed products: also get winner name
+                if product.get('status') in ['Closed', 'Unsold', 'Ended']:
+                    winner = adapter.get_employee_by_employeeId(bidder_id)
+                    product['winner_name'] = winner.get('name') if winner else bidder_id
+                    logger.info(f"Product {product['id']} ({product['name']}): Winner = {product['winner_name']}")
+                else:
+                    product['winner_name'] = None
+            else:
+                # No bids yet
+                product['highest_bidder_id'] = None
+                product['winner_name'] = None
+                if product.get('status') in ['Closed', 'Unsold', 'Ended']:
+                    logger.info(f"Product {product['id']} ({product['name']}): No bids")
+
+
+        
+        # Calculate status aggregation counts
+        status_counts = {
+            'Open': 0,
+            'Closed': 0,
+            'Upcoming': 0
+        }
+        
+        for product in products:
+            status = product.get('status')
+            if status == 'Open':
+                status_counts['Open'] += 1
+            elif status == 'Upcoming':
+                status_counts['Upcoming'] += 1
+            else:  # Closed, Ended or Unsold
+                status_counts['Closed'] += 1
+
+        
         employee = request.session.get('employee')
-        return render(request, 'products.html', {'products': products, 'employee': employee})
+        return render(request, 'products.html', {
+            'products': products, 
+            'employee': employee,
+            'status_counts': status_counts
+        })
     except Exception as e:
         logger.error("Error loading products list", exc_info=True)
-        return render(request, 'error.html', {'error': '無法加載商品列表，請稍後重試。'})
+        return render(request, 'error.html', {'error': '無法加載商品列表,請稍後重試。'})
+
 
 
 def product_detail(request, product_id):
@@ -54,10 +104,88 @@ def product_poll(request, product_id):
         if not product:
             return JsonResponse({'success': False, 'message': 'PRODUCT_NOT_FOUND'}, status=404)
         bids = adapter.get_bids_for_product(product_id, limit=10)
-        return JsonResponse({'success': True, 'product': product, 'bids': bids})
+        
+        # Add highest bidder information (只返回工號)
+        highest_bidder = None
+        if bids:
+            bidder_id = bids[0].get('bidder_id')
+            highest_bidder = {
+                'id': bidder_id,
+                'amount': bids[0].get('amount')
+            }
+        
+        # Add bidder names to bid history
+        for bid in bids:
+            bidder = adapter.get_employee_by_employeeId(bid.get('bidder_id'))
+            if bidder:
+                bid['bidder_name'] = bidder.get('name')
+            else:
+                bid['bidder_name'] = bid.get('bidder_id')
+        
+        return JsonResponse({
+            'success': True, 
+            'product': product, 
+            'bids': bids,
+            'highest_bidder': highest_bidder
+        })
     except Exception as e:
         logger.error(f"Error polling product {product_id}", exc_info=True)
         return JsonResponse({'success': False, 'message': 'INTERNAL_ERROR'}, status=500)
+
+
+def products_poll(request):
+    """
+    API endpoint for real-time product list polling.
+    Returns all products with latest data, status counts, and winner information.
+    """
+    try:
+        from datetime import datetime
+        
+        products = adapter.get_all_products()
+        
+        # Add highest bidder and winner information for all products
+        for product in products:
+            # Get the highest bid for this product
+            bids = adapter.get_bids_for_product(product['id'], limit=1)
+            
+            if bids:
+                bidder_id = bids[0].get('bidder_id')
+                # For all products: store highest bidder ID (工號)
+                product['highest_bidder_id'] = bidder_id
+                
+                # For closed products: also get winner name
+                if product.get('status') in ['Closed', 'Unsold', 'Ended']:
+                    winner = adapter.get_employee_by_employeeId(bidder_id)
+                    product['winner_name'] = winner.get('name') if winner else bidder_id
+                else:
+                    product['winner_name'] = None
+            else:
+                # No bids yet
+                product['highest_bidder_id'] = None
+                product['winner_name'] = None
+        
+        # Calculate status counts
+        status_counts = {'Open': 0, 'Closed': 0, 'Upcoming': 0}
+        for product in products:
+            status = product.get('status')
+            if status == 'Open':
+                status_counts['Open'] += 1
+            elif status == 'Upcoming':
+                status_counts['Upcoming'] += 1
+            else:  # Closed, Ended or Unsold
+                status_counts['Closed'] += 1
+        
+        return JsonResponse({
+            'success': True,
+            'timestamp': datetime.now().isoformat(),
+            'products': products,
+            'status_counts': status_counts
+        })
+    except Exception as e:
+        logger.error("Error in products_poll", exc_info=True)
+        return JsonResponse({'success': False, 'message': 'INTERNAL_ERROR'}, status=500)
+
+
 
 
 def login_view(request):

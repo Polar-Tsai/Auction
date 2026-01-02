@@ -25,8 +25,10 @@ urlpatterns = [
     path('admin/bids/', admin_views.admin_bids_list, name='admin_bids_list'),
 
     # API endpoints
+    path('api/products/poll/', views.products_poll, name='products_poll'),  # 商品列表輪詢
     path('api/products/<int:product_id>/poll/', views.product_poll, name='product_poll'),
     path('api/bids/', views.place_bid, name='place_bid'),
     path('api/products/<int:product_id>/images/', admin_views.get_product_images, name='get_product_images'),
     path('api/products/<int:product_id>/upload-images/', admin_views.upload_product_images, name='upload_product_images'),
 ]
+

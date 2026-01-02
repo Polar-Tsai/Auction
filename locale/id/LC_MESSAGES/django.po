@@ -67,8 +67,21 @@ msgstr "Tawar"
 msgid "尚未開標"
 msgstr "Belum Dibuka"
 
+msgid "得標者"
+msgstr "Pemenang"
+
+msgid "無人出價"
+msgstr "Tidak ada penawaran"
+
+msgid "最高出價"
+msgstr "Penawaran Tertinggi"
+
+msgid "等待首次出價"
+msgstr "Menunggu penawaran pertama"
+
 msgid "目前沒有商品"
 msgstr "Tidak ada produk saat ini"
+
 
 msgid "時"
 msgstr "jam"
