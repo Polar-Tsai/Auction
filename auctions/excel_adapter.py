@@ -13,8 +13,7 @@ class ExcelAdapter:
         self.bids_path = os.path.join(self.data_dir, 'bids.csv')
         # ensure files exist
         for p, cols in [
-            (self.employees_path, ['id','employeeId','name','department']),
-            (self.employees_path, ['id','employeeId','name','department']),
+            (self.employees_path, ['id','employeeId','name','department','admin','pwd']),
             (self.products_path, ['id','name','start_price','current_price','status','start_time','end_time','last_bid_time','brand','description','bids_count','highest_bidder_id']),
             (self.bids_path, ['id','product_id','bidder_id','amount','bid_timestamp'])
         ]:

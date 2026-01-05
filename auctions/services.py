@@ -75,16 +75,34 @@ class BidService:
             if str(last_bid.get('bidder_id')) == str(employee_id):
                 last_ts = datetime.fromisoformat(str(last_bid['bid_timestamp']))
                 if (datetime.utcnow() - last_ts).total_seconds() < 1:
-                    raise BusinessException("Bid too frequent", code='BID_TOO_FREQUENT')
+                    # Check if user is currently the highest bidder
+                    highest_bidder = product.get('highest_bidder_id')
+                    if str(highest_bidder) == str(employee_id):
+                        raise BusinessException("出價太頻繁，你是目前最高出價者唷！", code='BID_TOO_FREQUENT')
+                    else:
+                        raise BusinessException("出價太頻繁，請稍後再試", code='BID_TOO_FREQUENT')
 
 class AuthService:
     def __init__(self, adapter):
         self.adapter = adapter
 
-    def login(self, employee_id):
+    def login(self, employee_id, password=None):
+        """
+        Authenticate user with employee_id and password (MMDD format).
+        Password is optional for backward compatibility during migration.
+        """
         emp = self.adapter.get_employee_by_employeeId(employee_id)
         if not emp:
-            raise BusinessException("工號不存在", code='USER_NOT_FOUND')
+            raise BusinessException("工號或密碼錯誤", code='INVALID_CREDENTIALS')
+        
+        # Validate password if provided
+        if password is not None:
+            stored_pwd = str(emp.get('pwd', '')).strip()
+            input_pwd = str(password).strip()
+            
+            if not stored_pwd or stored_pwd != input_pwd:
+                raise BusinessException("工號或密碼錯誤", code='INVALID_CREDENTIALS')
+        
         return emp
 
 class AdminService:

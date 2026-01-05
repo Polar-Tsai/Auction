@@ -164,24 +164,47 @@
                 </div>
 
                 <!-- Bidding Area -->
-                <div class="{% if product.status == 'Open' %}bg-gray-200{% else %}bg-gray-100{% endif %} p-6 rounded-lg flex items-center gap-4">
+                <div class="{% if product.status == 'Open' %}bg-gray-200{% else %}bg-gray-100{% endif %} p-6 rounded-lg">
                     {% if employee %}
+                        <!-- Display current login info -->
+                        <div class="text-sm text-gray-600 mb-4">
+                            {% trans "當前登入" %}: <strong>{% trans "工號" %} {{ employee.employeeId }} - {{ employee.name }}</strong>
+                        </div>
                         {% if product.status == 'Open' %}
-                            <input type="number" id="bid-amount" class="flex-1 bg-white border-0 py-3 px-4 outline-none shadow-sm text-center text-gray-600 rounded" placeholder="{% trans '請輸入出價金額' %}" />
-                            <button onclick="placeBid()" class="w-40 bg-gradient-to-b from-yellow-300 to-yellow-500 hover:from-yellow-400 hover:to-yellow-600 text-black font-bold py-3 rounded shadow-md border border-yellow-600 transform transition active:scale-95">
-                                {% trans "出價" %}
-                            </button>
+                            <!-- Fixed increment bidding -->
+                            <div class="space-y-4">
+                                <div class="grid grid-cols-2 gap-4 text-sm mb-4">
+                                    <div>
+                                        <span class="text-gray-600">{% trans "當前價格" %}:</span>
+                                        <div class="text-2xl font-bold text-gray-900 mt-1" id="current-price-display">${{ product.current_price|default:product.start_price }}</div>
+                                    </div>
+                                    <div>
+                                        <span class="text-gray-600">{% trans "下次出價" %}:</span>
+                                        <div class="text-2xl font-bold text-blue-600 mt-1">
+                                            $<span id="next-bid-amount">{{ product.current_price|default:product.start_price|add:bid_increment }}</span>
+                                            <span class="text-sm text-gray-500">(+${{ bid_increment }})</span>
+                                        </div>
+                                    </div>
+                                </div>
+                                
+                                <button onclick="placeBid()" class="w-full bg-gradient-to-b from-yellow-300 to-yellow-500 hover:from-yellow-400 hover:to-yellow-600 text-black font-bold py-4 text-lg rounded shadow-md border border-yellow-600 transform transition active:scale-95">
+                                    {% trans "出價" %} +${{ bid_increment }}
+                                </button>
+                                
+                                <p class="text-xs text-gray-500 text-center">{% trans "每次出價增量為底價的 1/10" %}</p>
+                            </div>
                         {% else %}
-                            <input type="number" class="flex-1 bg-gray-200 border-0 py-3 px-4 outline-none shadow-sm text-center text-gray-400 rounded cursor-not-allowed" placeholder="{% trans '請輸入出價金額' %}" disabled />
-                            <button class="w-40 bg-gray-300 text-gray-500 font-bold py-3 rounded shadow-md cursor-not-allowed" disabled>
-                                {% if product.status == 'Upcoming' %}{% trans "尚未開始" %}
-                                {% elif product.status == 'Closed' or product.status == 'Ended' %}{% trans "已結束" %}
-                                {% elif product.status == 'Unsold' %}{% trans "流標" %}
-                                {% else %}{% trans "無法出價" %}{% endif %}
-                            </button>
+                            <div class="text-center py-4">
+                                <button class="w-full bg-gray-300 text-gray-500 font-bold py-3 rounded shadow-md cursor-not-allowed" disabled>
+                                    {% if product.status == 'Upcoming' %}{% trans "尚未開始" %}
+                                    {% elif product.status == 'Closed' or product.status == 'Ended' %}{% trans "已結束" %}
+                                    {% elif product.status == 'Unsold' %}{% trans "流標" %}
+                                    {% else %}{% trans "無法出價" %}{% endif %}
+                                </button>
+                            </div>
                         {% endif %}
                     {% else %}
-                        <div class="w-full text-center text-gray-500">{% trans "請先登入以出價" %}</div>
+                        <div class="w-full text-center text-gray-500 py-4">{% trans "請先登入以出價" %}</div>
                     {% endif %}
                 </div>
             </div>
@@ -226,7 +249,8 @@ const i18n = {
 
 const productId = {{ product.id }};
 const endTimeStr = "{{ product.end_time|date:'Y-m-d H:i:s' }}";
-const REFRESH_INTERVAL = 3000;
+const bidIncrement = {{ bid_increment }};  // Increment value from backend
+const REFRESH_INTERVAL = 1000;  // Poll every 1 second for real-time updates
 
 function updateCountdown() {
     const el = document.getElementById('countdown-text');
@@ -265,14 +289,16 @@ function showToast(message, type='info') {
 }
 
 async function placeBid() {
-    const amountInput = document.getElementById('bid-amount');
-    const amount = amountInput.value;
+    // Auto-calculate bid amount (current price + increment)
+    const currentPriceEl = document.getElementById('current-price-display');
+    const currentPrice = parseInt(currentPriceEl?.textContent.replace('$', '').replace(',', '') || 0);
+    const amount = currentPrice + bidIncrement;
     
-    if (!amount) {
-        showToast(i18n.pleaseEnterAmount, 'error');
-        return;
-    }
-
+    // Disable button to prevent double-click
+    const bidButton = event.target;
+    if (bidButton.disabled) return;
+    bidButton.disabled = true;
+    
     try {
         const langPrefix = window.location.pathname.split('/')[1];
         const res = await fetch(`/${langPrefix}/api/bids/`, {
@@ -287,14 +313,33 @@ async function placeBid() {
         
         if (data.success) {
             showToast(`${i18n.bidSuccess} ${data.newPrice}`, 'success');
-            amountInput.value = '';
-            pollData(); // Refresh immediately
+            
+            // Immediately update UI with new price
+            const newPrice = data.newPrice || amount;
+            if (currentPriceEl) {
+                currentPriceEl.textContent = '$' + newPrice;
+            }
+            
+            const nextBidEl = document.getElementById('next-bid-amount');
+            if (nextBidEl) {
+                nextBidEl.textContent = (parseInt(newPrice) + bidIncrement);
+            }
+            
+            // Also trigger full poll for bid history
+            pollData();
+            
+            // Re-enable button after 1.5 seconds
+            setTimeout(() => {
+                bidButton.disabled = false;
+            }, 1500);
         } else {
             showToast(data.message || i18n.bidFailed, 'error');
+            bidButton.disabled = false;
         }
     } catch (e) {
         console.error(e);
         showToast(i18n.networkError, 'error');
+        bidButton.disabled = false;
     }
 }
 
@@ -306,8 +351,30 @@ async function pollData() {
         if (data.success) {
             // Update Price
             const p = data.product;
-            document.getElementById('current-price').innerText = p.current_price || p.start_price;
-            document.getElementById('bids-count').innerText = p.bids_count || 0;
+            const currentPrice = p.current_price || p.start_price;
+            
+            // Update old element (if exists)
+            const oldPriceEl = document.getElementById('current-price');
+            if (oldPriceEl) {
+                oldPriceEl.innerText = currentPrice;
+            }
+            
+            // Update new UI elements for fixed-increment bidding
+            const currentPriceDisplay = document.getElementById('current-price-display');
+            if (currentPriceDisplay) {
+                currentPriceDisplay.innerText = '$' + currentPrice;
+            }
+            
+            const nextBidAmount = document.getElementById('next-bid-amount');
+            if (nextBidAmount) {
+                const nextAmount = parseInt(currentPrice) + bidIncrement;
+                nextBidAmount.innerText = nextAmount;
+            }
+            
+            const bidsCountEl = document.getElementById('bids-count');
+            if (bidsCountEl) {
+                bidsCountEl.innerText = p.bids_count || 0;
+            }
             
             // Update List
             const list = document.getElementById('bids-list');
@@ -333,12 +400,9 @@ async function pollData() {
 
 // Start polling with new system
 document.addEventListener('DOMContentLoaded', () => {
-    // Initialize product detail poller
-    const poller = new ProductDetailPoller(productId);
-    poller.start();
-
-    // Setup Page Visibility API
-    setupVisibilityHandling(poller);
+    // Poll immediately and set up interval
+    pollData();
+    setInterval(pollData, REFRESH_INTERVAL);
 
     // Keep countdown timer
     setInterval(updateCountdown, 1000);

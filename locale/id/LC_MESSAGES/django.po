@@ -172,3 +172,36 @@ msgstr "Penawaran gagal"
 
 msgid "網路錯誤，請稍後重試"
 msgstr "Kesalahan jaringan, silakan coba lagi nanti"
+# New translations for password and bidding features
+msgid "密碼"
+msgstr "Kata Sandi"
+
+msgid "出生月日四位數，例如：0315"
+msgstr "Tanggal lahir 4 digit, contoh: 0315"
+
+msgid "請輸入出生月日，格式：MMDD"
+msgstr "Masukkan tanggal lahir dengan format MMDD"
+
+msgid "登入"
+msgstr "Masuk"
+
+msgid "您目前以工號"
+msgstr "Anda saat ini login dengan ID"
+
+msgid "登入，請確認是您本人操作。冒用他人工號將違反遊戲規定。"
+msgstr "silakan pastikan ini adalah Anda. Penyalahgunaan ID orang lain akan melanggar aturan permainan."
+
+msgid "當前登入"
+msgstr "Login Saat Ini"
+
+msgid "當前價格"
+msgstr "Harga Saat Ini"
+
+msgid "下次出價"
+msgstr "Penawaran Berikutnya"
+
+msgid "每次出價增量為底價的 1/10"
+msgstr "Setiap penawaran bertambah 1/10 dari harga dasar"
+
+msgid "無法出價"
+msgstr "Tidak dapat menawar"

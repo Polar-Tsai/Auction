@@ -29,6 +29,29 @@ def products_list(request):
         products = adapter.get_all_products()
         
         
+        # Separate products by status for sorting
+        closed_products = [p for p in products if p.get('status') in ['Closed', 'Unsold', 'Ended']]
+        other_products = [p for p in products if p.get('status') not in ['Closed', 'Unsold', 'Ended']]
+        
+        # Sort closed products by end_time (descending - latest first)
+        from datetime import datetime
+        def parse_end_time(product):
+            end_str = product.get('end_time', '')
+            if not end_str:
+                return datetime.min
+            try:
+                if 'T' in end_str:
+                    return datetime.fromisoformat(end_str.replace('Z', '+00:00'))
+                else:
+                    return datetime.strptime(end_str, "%Y-%m-%d %H:%M")
+            except:
+                return datetime.min
+        
+        closed_products.sort(key=parse_end_time, reverse=True)
+        
+        # Combine: closed products first, then others
+        products = closed_products + other_products
+        
         # Add highest bidder and winner information for all products
         for product in products:
             # Get the highest bid for this product
@@ -90,9 +113,19 @@ def product_detail(request, product_id):
         if not product:
             return render(request, 'product_detail.html', {'error': '商品不存在'})
         
+        # Calculate bid increment (start_price / 10, rounded up)
+        import math
+        start_price = int(product.get('start_price', 0))
+        bid_increment = math.ceil(start_price / 10) if start_price > 0 else 1
+        
         images = adapter.get_product_images(product_id)
         employee = request.session.get('employee')
-        return render(request, 'product_detail.html', {'product': product, 'images': images, 'employee': employee})
+        return render(request, 'product_detail.html', {
+            'product': product, 
+            'images': images, 
+            'employee': employee,
+            'bid_increment': bid_increment
+        })
     except Exception as e:
         logger.error(f"Error loading product {product_id}", exc_info=True)
         return render(request, 'product_detail.html', {'error': '系統錯誤'})
@@ -143,6 +176,28 @@ def products_poll(request):
         
         products = adapter.get_all_products()
         
+        # Separate products by status for sorting
+        closed_products = [p for p in products if p.get('status') in ['Closed', 'Unsold', 'Ended']]
+        other_products = [p for p in products if p.get('status') not in ['Closed', 'Unsold', 'Ended']]
+        
+        # Sort closed products by end_time (descending - latest first)
+        def parse_end_time(product):
+            end_str = product.get('end_time', '')
+            if not end_str:
+                return datetime.min
+            try:
+                if 'T' in end_str:
+                    return datetime.fromisoformat(end_str.replace('Z', '+00:00'))
+                else:
+                    return datetime.strptime(end_str, "%Y-%m-%d %H:%M")
+            except:
+                return datetime.min
+        
+        closed_products.sort(key=parse_end_time, reverse=True)
+        
+        # Combine: closed products first, then others
+        products = closed_products + other_products
+        
         # Add highest bidder and winner information for all products
         for product in products:
             # Get the highest bid for this product
@@ -191,8 +246,10 @@ def products_poll(request):
 def login_view(request):
     if request.method == 'POST':
         employee_id = request.POST.get('employeeId')
+        password = request.POST.get('password')  # Get password from form
         try:
-            emp = auth_service.login(employee_id)
+            # Pass password to auth_service
+            emp = auth_service.login(employee_id, password)
             # Session management remains in View
             request.session['employee'] = {
                 'id': emp.get('id'),
