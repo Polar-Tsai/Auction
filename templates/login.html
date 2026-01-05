@@ -27,9 +27,15 @@
         <input name="employeeId" type="text" class="w-full border-b-2 border-gray-300 focus:border-slate-600 outline-none py-2 transition-colors bg-transparent" placeholder="{% trans '請輸入工號 (例: 1305)' %}" required />
       </div>
 
+      <div>
+        <label class="block text-gray-700 mb-2 font-medium">{% trans "密碼" %}</label>
+        <input name="password" type="password" maxlength="4" pattern="\d{4}" class="w-full border-b-2 border-gray-300 focus:border-slate-600 outline-none py-2 transition-colors bg-transparent" placeholder="{% trans '出生月日四位數，例如：0315' %}" required />
+        <small class="text-gray-500 text-xs mt-1 block">{% trans "請輸入出生月日，格式：MMDD" %}</small>
+      </div>
+
       <div class="pt-4">
         <button class="w-full bg-slate-800 hover:bg-slate-900 text-white font-bold py-3 rounded transition duration-200">
-          Enter
+          {% trans "登入" %}
         </button>
       </div>
     </form>
