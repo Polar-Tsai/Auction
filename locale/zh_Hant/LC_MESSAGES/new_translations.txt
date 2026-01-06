@@ -1,0 +1,34 @@
+# New translations for password and bidding features
+
+msgid "密碼"
+msgstr "密碼"
+
+msgid "出生月日四位數，例如：0315"
+msgstr "出生月日四位數，例如：0315"
+
+msgid "請輸入出生月日，格式：MMDD"
+msgstr "請輸入出生月日，格式：MMDD"
+
+msgid "登入"
+msgstr "登入"
+
+msgid "您目前以工號"
+msgstr "您目前以工號"
+
+msgid "登入，請確認是您本人操作。冒用他人工號將違反遊戲規定。"
+msgstr "登入，請確認是您本人操作。冒用他人工號將違反遊戲規定。"
+
+msgid "當前登入"
+msgstr "當前登入"
+
+msgid "當前價格"
+msgstr "當前價格"
+
+msgid "下次出價"
+msgstr "下次出價"
+
+msgid "每次出價增量為底價的 1/10"
+msgstr "每次出價增量為底價的 1/10"
+
+msgid "無法出價"
+msgstr "無法出價"

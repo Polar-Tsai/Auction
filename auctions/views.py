@@ -157,6 +157,14 @@ def product_poll(request, product_id):
         product = adapter.get_product_by_id(product_id)
         if not product:
             return JsonResponse({'success': False, 'message': 'PRODUCT_NOT_FOUND'}, status=404)
+        
+        # Convert datetime objects to strings for JSON serialization
+        from datetime import datetime
+        if isinstance(product.get('end_time'), datetime):
+            product['end_time'] = product['end_time'].strftime("%Y-%m-%d %H:%M:%S")
+        if isinstance(product.get('start_time'), datetime):
+            product['start_time'] = product['start_time'].strftime("%Y-%m-%d %H:%M:%S")
+        
         bids = adapter.get_bids_for_product(product_id, limit=10)
         
         # Add highest bidder information (只返回工號)

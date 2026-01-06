@@ -181,14 +181,23 @@
                                     <div>
                                         <span class="text-gray-600">{% trans "下次出價" %}:</span>
                                         <div class="text-2xl font-bold text-blue-600 mt-1">
-                                            $<span id="next-bid-amount">{{ product.current_price|default:product.start_price|add:bid_increment }}</span>
-                                            <span class="text-sm text-gray-500">(+${{ bid_increment }})</span>
+                                            {% if product.bids_count == 0 %}
+                                                $<span id="next-bid-amount">{{ product.start_price }}</span>
+                                                <span class="text-sm text-gray-500">({% trans "底價" %})</span>
+                                            {% else %}
+                                                $<span id="next-bid-amount">{{ product.current_price|default:product.start_price|add:bid_increment }}</span>
+                                                <span class="text-sm text-gray-500">(+${{ bid_increment }})</span>
+                                            {% endif %}
                                         </div>
                                     </div>
                                 </div>
                                 
                                 <button onclick="placeBid()" class="w-full bg-gradient-to-b from-yellow-300 to-yellow-500 hover:from-yellow-400 hover:to-yellow-600 text-black font-bold py-4 text-lg rounded shadow-md border border-yellow-600 transform transition active:scale-95">
-                                    {% trans "出價" %} +${{ bid_increment }}
+                                    {% if product.bids_count == 0 %}
+                                        {% trans "出價" %} ${{ product.start_price }}
+                                    {% else %}
+                                        {% trans "出價" %} +${{ bid_increment }}
+                                    {% endif %}
                                 </button>
                                 
                                 <p class="text-xs text-gray-500 text-center">{% trans "每次出價增量為底價的 1/10" %}</p>
@@ -244,13 +253,16 @@ const i18n = {
   bidSuccess: "{% trans '出價成功！目前價格' %}",
   bidFailed: "{% trans '出價失敗' %}",
   networkError: "{% trans '網路錯誤，請稍後重試' %}",
-  noBidsYet: "{% trans '目前尚無出價，成為第一個出價者！' %}"
+  noBidsYet: "{% trans '目前尚無出價，成為第一個出價者！' %}",
+  timeExtended: "{% trans '⏰ 競標時間已延長' %}"
 };
 
 const productId = {{ product.id }};
-const endTimeStr = "{{ product.end_time|date:'Y-m-d H:i:s' }}";
+let endTimeStr = "{{ product.end_time|date:'Y-m-d H:i:s' }}";  // Use let so it can be updated
 const bidIncrement = {{ bid_increment }};  // Increment value from backend
+const startPrice = {{ product.start_price }};  // Start price (底價)
 const REFRESH_INTERVAL = 1000;  // Poll every 1 second for real-time updates
+let currentBidsCount = {{ product.bids_count|default:0 }};  // Track if there are any bids
 
 function updateCountdown() {
     const el = document.getElementById('countdown-text');
@@ -289,10 +301,12 @@ function showToast(message, type='info') {
 }
 
 async function placeBid() {
-    // Auto-calculate bid amount (current price + increment)
+    // Auto-calculate bid amount
     const currentPriceEl = document.getElementById('current-price-display');
     const currentPrice = parseInt(currentPriceEl?.textContent.replace('$', '').replace(',', '') || 0);
-    const amount = currentPrice + bidIncrement;
+    
+    // If this is the first bid (no bids yet), use start price; otherwise add increment
+    const amount = currentBidsCount === 0 ? startPrice : (currentPrice + bidIncrement);
     
     // Disable button to prevent double-click
     const bidButton = event.target;
@@ -314,18 +328,27 @@ async function placeBid() {
         if (data.success) {
             showToast(`${i18n.bidSuccess} ${data.newPrice}`, 'success');
             
+            // Check if time was extended (anti-sniper)
+            if (data.time_extended) {
+                const extSeconds = data.extension_seconds || 10;
+                showToast(`${i18n.timeExtended} ${extSeconds} ${i18n.second}！`, 'info');
+            }
+            
             // Immediately update UI with new price
             const newPrice = data.newPrice || amount;
             if (currentPriceEl) {
                 currentPriceEl.textContent = '$' + newPrice;
             }
             
+            // Update bids count (now there's at least one bid)
+            currentBidsCount++;
+            
             const nextBidEl = document.getElementById('next-bid-amount');
             if (nextBidEl) {
                 nextBidEl.textContent = (parseInt(newPrice) + bidIncrement);
             }
             
-            // Also trigger full poll for bid history
+            // Also trigger full poll for bid history and updated end_time
             pollData();
             
             // Re-enable button after 1.5 seconds
@@ -349,8 +372,23 @@ async function pollData() {
         const res = await fetch(`/${langPrefix}/api/products/${productId}/poll/`);
         const data = await res.json();
         if (data.success) {
-            // Update Price
+            // Update end_time if it changed (anti-sniper extension)
             const p = data.product;
+            if (p.end_time) {
+                // Format: "YYYY-MM-DD HH:MM:SS" or "YYYY-MM-DDTHH:MM:SS" or "YYYY-MM-DD HH:MM"
+                let newEndTime = String(p.end_time).replace('T', ' ').split('.')[0]; // Remove microseconds
+                // Pad with :00 if no seconds
+                if (newEndTime.length === 16) {
+                    newEndTime += ':00';
+                }
+                
+                if (newEndTime !== endTimeStr) {
+                    console.log('⏰ End time changed from', endTimeStr, 'to', newEndTime);
+                    endTimeStr = newEndTime;
+                }
+            }
+            
+            // Update Price
             const currentPrice = p.current_price || p.start_price;
             
             // Update old element (if exists)
@@ -365,16 +403,13 @@ async function pollData() {
                 currentPriceDisplay.innerText = '$' + currentPrice;
             }
             
-            const nextBidAmount = document.getElementById('next-bid-amount');
-            if (nextBidAmount) {
-                const nextAmount = parseInt(currentPrice) + bidIncrement;
-                nextBidAmount.innerText = nextAmount;
-            }
-            
             const bidsCountEl = document.getElementById('bids-count');
             if (bidsCountEl) {
                 bidsCountEl.innerText = p.bids_count || 0;
             }
+            
+            // Update current bids count for first bid logic
+            currentBidsCount = p.bids_count || 0;
             
             // Update highest bidder (display employee ID, not name)
             const highestBidderEl = document.querySelector('[data-highest-bidder]');
@@ -384,6 +419,18 @@ async function pollData() {
                     highestBidderEl.innerHTML = `<span class="text-blue-600 font-semibold">${data.highest_bidder.id}</span>`;
                 } else {
                     highestBidderEl.innerText = '---';
+                }
+            }
+            
+            // Update next bid amount based on whether there are bids
+            const nextBidEl = document.getElementById('next-bid-amount');
+            if (nextBidEl) {
+                if (currentBidsCount === 0) {
+                    // First bid: show start price
+                    nextBidEl.textContent = startPrice;
+                } else {
+                    // Subsequent bids: show current price + increment
+                    nextBidEl.textContent = (parseInt(currentPrice) + bidIncrement);
                 }
             }
             

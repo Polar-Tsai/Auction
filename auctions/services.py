@@ -1,9 +1,13 @@
 import logging
-from datetime import datetime
+from datetime import datetime, timedelta
 from common.exceptions import BusinessException, SystemException
 from common.logger import get_logger
 
 logger = get_logger(__name__)
+
+# Anti-sniper: extend end time if bid within this threshold
+ANTI_SNIPER_THRESHOLD_SECONDS = 10
+ANTI_SNIPER_EXTEND_SECONDS = 10
 
 class BidService:
     def __init__(self, adapter):
@@ -12,6 +16,7 @@ class BidService:
     def place_bid(self, product_id, employee_id, amount):
         """
         Coordinates the bidding process: validation -> execution.
+        Includes anti-sniper mechanism: extends end time if bid within threshold.
         """
         try:
             # 1. Fetch Product
@@ -24,6 +29,42 @@ class BidService:
 
             # 3. Execute Bid via Adapter (persistence)
             result = self.adapter.save_bid(product_id, employee_id, amount)
+            
+            # 4. Anti-Sniper: Check if we need to extend the auction time
+            try:
+                end_time_str = product.get('end_time')
+                if end_time_str:
+                    # Parse end time - could be string or datetime object
+                    if isinstance(end_time_str, datetime):
+                        end_time = end_time_str
+                    else:
+                        # Parse string (format: "YYYY-MM-DD HH:MM")
+                        end_time = datetime.strptime(str(end_time_str), "%Y-%m-%d %H:%M")
+                    
+                    current_time = datetime.now()
+                    time_remaining = (end_time - current_time).total_seconds()
+                    
+                    # If bid within threshold and auction hasn't ended yet
+                    if 0 < time_remaining < ANTI_SNIPER_THRESHOLD_SECONDS:
+                        # Extend the auction by ANTI_SNIPER_EXTEND_SECONDS
+                        new_end_time = current_time + timedelta(seconds=ANTI_SNIPER_EXTEND_SECONDS)
+                        self.adapter.update_product(product_id, {
+                            'end_time': new_end_time.strftime("%Y-%m-%d %H:%M")
+                        })
+                        
+                        result['time_extended'] = True
+                        result['new_end_time'] = new_end_time.strftime("%Y-%m-%d %H:%M:%S")
+                        result['extension_seconds'] = ANTI_SNIPER_EXTEND_SECONDS
+                        
+                        logger.info(f"🕒 Anti-sniper: Extended auction time for product {product_id} by {ANTI_SNIPER_EXTEND_SECONDS}s. New end time: {new_end_time}")
+                    else:
+                        result['time_extended'] = False
+                else:
+                    result['time_extended'] = False
+            except Exception as ext_error:
+                # Don't fail the bid if time extension fails - log and continue
+                logger.error(f"Failed to extend auction time for product {product_id}: {str(ext_error)}", exc_info=True)
+                result['time_extended'] = False
             
             logger.info(f"Bid placed successfully: user={employee_id}, product={product_id}, amount={amount}")
             return result

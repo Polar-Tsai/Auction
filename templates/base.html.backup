@@ -1,0 +1,302 @@
+{% load i18n %}
+{% load static %}
+<!doctype html>
+<html lang="{{ LANGUAGE_CODE }}">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Kingsteel Auction</title>
+  <!-- Tailwind via CDN for scaffold -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <style>
+    /* Orientation-based responsive design */
+    @media (orientation: portrait) {
+      .desktop-header {
+        display: none !important;
+      }
+      .mobile-header {
+        display: flex !important;
+      }
+    }
+    
+    @media (orientation: landscape) {
+      .desktop-header {
+        display: flex !important;
+      }
+      .mobile-header {
+        display: none !important;
+      }
+    }
+
+    /* Hamburger menu animations */
+    .hamburger-menu {
+      position: fixed;
+      top: 0;
+      right: -100%;
+      width: 80%;
+      max-width: 320px;
+      height: 100vh;
+      background: white;
+      box-shadow: -2px 0 10px rgba(0,0,0,0.1);
+      transition: right 0.3s ease-in-out;
+      z-index: 1001;
+    }
+    
+    .hamburger-menu.open {
+      right: 0;
+    }
+    
+    .hamburger-overlay {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100vh;
+      background: rgba(0,0,0,0.5);
+      opacity: 0;
+      visibility: hidden;
+      transition: opacity 0.3s, visibility 0.3s;
+      z-index: 1000;
+    }
+    
+    .hamburger-overlay.open {
+      opacity: 1;
+      visibility: visible;
+    }
+
+    /* Menu item styles */
+    .menu-item {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 16px 20px;
+      border: 1px solid #e5e7eb;
+      border-radius: 12px;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+    
+    .menu-item:hover {
+      background: #f9fafb;
+      border-color: #d1d5db;
+    }
+    
+    .menu-item-icon {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      font-size: 16px;
+    }
+  </style>
+</head>
+<body class="bg-gray-100 text-gray-900">
+  <div class="container mx-auto p-4">
+    <!-- Desktop Header (Landscape) -->
+    <header class="desktop-header justify-between items-center mb-4" style="display: none;">
+      <a href="{% url 'auctions:products_list' %}" class="flex items-center gap-3 no-underline hover:opacity-80 transition">
+        <img src="{% static 'images/logo.svg' %}" alt="Logo" class="h-10 w-10">
+        <div class="text-lg font-bold text-gray-900">龍舟計畫 - {% trans "競拍網站" %}</div>
+      </a>
+      <div class="flex items-center gap-4">
+        <!-- Language Switcher -->
+        <div class="flex items-center gap-2 text-sm border-r pr-4">
+          {% get_current_language as LANGUAGE_CODE %}
+          {% get_available_languages as LANGUAGES %}
+          {% for lang_code, lang_name in LANGUAGES %}
+            <a href="#" 
+               onclick="switchLanguage('{{ lang_code }}'); return false;"
+               class="{% if LANGUAGE_CODE == lang_code %}font-bold text-blue-600{% else %}text-gray-600 hover:text-gray-800{% endif %} transition"
+               title="{{ lang_name }}">
+              {% if lang_code == 'zh-hant' %}🇹🇼 中文{% elif lang_code == 'id' %}🇮🇩 Indonesia{% endif %}
+            </a>
+          {% endfor %}
+        </div>
+        
+        <!-- User Navigation -->
+        <div>
+        {% if employee %}
+          <span class="mr-4 text-gray-600">{% trans "歡迎" %}，{{ employee.name }}!</span>
+          <a href="{% url 'auctions:products_list' %}" class="mr-4 text-gray-800 hover:text-black font-medium">{% trans "拍賣清單" %}</a>
+          <a href="{% url 'auctions:user_bids_list' %}" class="mr-4 text-gray-800 hover:text-black font-medium">{% trans "下標紀錄" %}</a>
+          <a href="{% url 'auctions:logout' %}" class="text-gray-800 hover:text-black font-medium">{% trans "登出" %}</a>
+        {% else %}
+          <a href="{% url 'auctions:login' %}" class="mr-4 text-sm text-blue-600 font-bold">{% trans "員工登入" %}</a>
+          <a href="{% url 'auctions:admin_login' %}" class="text-sm text-gray-500">{% trans "管理員登入" %}</a>
+        {% endif %}
+        </div>
+      </div>
+    </header>
+
+    <!-- Mobile Header (Portrait) -->
+    <header class="mobile-header justify-between items-center mb-4" style="display: none;">
+      <a href="{% url 'auctions:products_list' %}" class="flex items-center gap-2 no-underline hover:opacity-80 transition">
+        <img src="{% static 'images/logo.svg' %}" alt="Logo" class="h-8 w-8">
+        <div class="text-lg font-bold text-gray-900">龍舟計畫 - {% trans "競拍網站" %}</div>
+      </a>
+      <button id="hamburger-btn" class="p-2">
+        <!-- Hamburger Icon -->
+        <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"></path>
+        </svg>
+      </button>
+    </header>
+
+    <!-- Hamburger Menu Overlay -->
+    <div id="hamburger-overlay" class="hamburger-overlay" onclick="closeHamburgerMenu()"></div>
+
+    <!-- Hamburger Menu -->
+    <div id="hamburger-menu" class="hamburger-menu">
+      <div class="p-6 h-full overflow-y-auto">
+        <!-- Close Button -->
+        <div class="flex justify-between items-center mb-6">
+          <h2 class="text-xl font-bold">龍舟計畫 - {% trans "競拍網站" %}</h2>
+          <button onclick="closeHamburgerMenu()" class="p-2">
+            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+            </svg>
+          </button>
+        </div>
+
+        <div class="space-y-4">
+          <!-- Language Selection -->
+          <div class="menu-item" onclick="toggleLanguageMenu(event)">
+            <div class="menu-item-icon">
+              <span class="text-2xl">🌐</span>
+              <span class="font-medium">
+                {% get_current_language as CURRENT_LANG %}
+                {% if CURRENT_LANG == 'zh-hant' %}🇹🇼 中文{% elif CURRENT_LANG == 'id' %}🇮🇩 Indonesia{% endif %}
+              </span>
+            </div>
+            <svg class="w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
+            </svg>
+          </div>
+          
+          <!-- Language Options (Hidden by default) -->
+          <div id="language-options" class="hidden ml-8 space-y-2">
+            {% get_current_language as LANGUAGE_CODE %}
+            {% get_available_languages as LANGUAGES %}
+            {% for lang_code, lang_name in LANGUAGES %}
+              <a href="#" 
+                 onclick="switchLanguage('{{ lang_code }}'); return false;"
+                 class="block py-2 px-4 rounded-lg hover:bg-gray-100 {% if LANGUAGE_CODE == lang_code %}font-bold text-blue-600{% else %}text-gray-700{% endif %}">
+                {% if lang_code == 'zh-hant' %}🇹🇼 中文{% elif lang_code == 'id' %}🇮🇩 Indonesia{% endif %}
+              </a>
+            {% endfor %}
+          </div>
+
+          <!-- Role Selection (User/Admin) -->
+          {% if employee %}
+            <!-- Show current role for logged-in employee -->
+            {% if employee.is_potential_admin %}
+              <!-- Admin-eligible employee can switch to Admin -->
+              <a href="{% url 'auctions:admin_login' %}" class="menu-item no-underline">
+                <div class="menu-item-icon">
+                  <span class="text-2xl">👤</span>
+                  <span class="font-medium">{% trans "切換到 Admin" %}</span>
+                </div>
+                <svg class="w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path>
+                </svg>
+              </a>
+            {% else %}
+              <!-- Regular employee, no switching option -->
+              <div class="menu-item opacity-50 cursor-default">
+                <div class="menu-item-icon">
+                  <span class="text-2xl">👤</span>
+                  <span class="font-medium">User</span>
+                </div>
+              </div>
+            {% endif %}
+          {% elif is_admin %}
+            <!-- Admin can switch to User -->
+            <a href="{% url 'auctions:login' %}" class="menu-item no-underline">
+              <div class="menu-item-icon">
+                <span class="text-2xl">👤</span>
+                <span class="font-medium">{% trans "切換到 User" %}</span>
+              </div>
+              <svg class="w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path>
+              </svg>
+            </a>
+          {% else %}
+            <!-- Not logged in, show User and link to login -->
+            <a href="{% url 'auctions:login' %}" class="menu-item no-underline">
+              <div class="menu-item-icon">
+                <span class="text-2xl">👤</span>
+                <span class="font-medium">User</span>
+              </div>
+              <svg class="w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path>
+              </svg>
+            </a>
+          {% endif %}
+
+          <!-- Navigation Links (if logged in as employee) -->
+          {% if employee %}
+            <hr class="my-4">
+            <a href="{% url 'auctions:products_list' %}" class="block py-3 px-4 hover:bg-gray-50 rounded-lg">
+              {% trans "拍賣清單" %}
+            </a>
+            <a href="{% url 'auctions:user_bids_list' %}" class="block py-3 px-4 hover:bg-gray-50 rounded-lg">
+              {% trans "下標紀錄" %}
+            </a>
+            <a href="{% url 'auctions:logout' %}" class="block py-3 px-4 hover:bg-gray-50 rounded-lg text-red-600">
+              {% trans "登出" %}
+            </a>
+          {% endif %}
+        </div>
+      </div>
+    </div>
+
+    <!-- Hidden form for language switching -->
+    <form id="language-form" method="post" action="{% url 'set_language' %}" style="display: none;">
+      {% csrf_token %}
+      <input name="next" type="hidden" value="{{ request.path }}">
+      <input name="language" type="hidden" id="language-input">
+    </form>
+
+    <script>
+      // Switch language function
+      function switchLanguage(langCode) {
+        document.getElementById('language-input').value = langCode;
+        document.getElementById('language-form').submit();
+      }
+
+      // Toggle language options in mobile menu
+      function toggleLanguageMenu(event) {
+        event.stopPropagation();
+        const languageOptions = document.getElementById('language-options');
+        languageOptions.classList.toggle('hidden');
+      }
+
+      function openHamburgerMenu() {
+        document.getElementById('hamburger-menu').classList.add('open');
+        document.getElementById('hamburger-overlay').classList.add('open');
+        document.body.style.overflow = 'hidden';
+      }
+
+      function closeHamburgerMenu() {
+        document.getElementById('hamburger-menu').classList.remove('open');
+        document.getElementById('hamburger-overlay').classList.remove('open');
+        document.body.style.overflow = '';
+        // Also hide language options when closing menu
+        document.getElementById('language-options').classList.add('hidden');
+      }
+
+      // Hamburger button click handler
+      const hamburgerBtn = document.getElementById('hamburger-btn');
+      if (hamburgerBtn) {
+        hamburgerBtn.addEventListener('click', openHamburgerMenu);
+      }
+
+      // Prevent menu clicks from closing the menu
+      document.getElementById('hamburger-menu').addEventListener('click', function(e) {
+        e.stopPropagation();
+      });
+    </script>
+
+    {% block content %}{% endblock %}
+  </div>
+</body>
+</html>

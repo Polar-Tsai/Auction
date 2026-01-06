@@ -204,9 +204,20 @@ class ExcelAdapter:
             # So we SHOULD strictly check invariants here: e.g. amount > current_price.
             
             current_price = float(product.get('current_price') if not pd.isna(product.get('current_price')) else product.get('start_price',0))
-            if amount <= current_price:
-                 # Race condition detected
-                 raise ValueError("Race condition: Price already updated")
+            bids_count = int(product.get('bids_count', 0)) if not pd.isna(product.get('bids_count')) else 0
+            
+            # For first bid: allow amount == start_price  
+            # For subsequent bids: amount must be > current_price
+            if bids_count == 0:
+                # First bid: must be >= start_price (usually should equal start_price)
+                start_price = float(product.get('start_price', 0))
+                if amount < start_price:
+                    raise ValueError("First bid must be at least the starting price")
+            else:
+                # Subsequent bids: must be > current_price
+                if amount <= current_price:
+                     # Race condition detected
+                     raise ValueError("Race condition: Price already updated")
 
             # Append bid
             new_id = 1 if df_bids.empty else int(df_bids['id'].max()) + 1
