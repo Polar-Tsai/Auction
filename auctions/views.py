@@ -1,6 +1,7 @@
 import os
 import json
 import logging
+from functools import wraps
 from django.shortcuts import render, redirect
 from django.http import JsonResponse, HttpResponseBadRequest
 from django.views.decorators.csrf import csrf_exempt
@@ -20,10 +21,29 @@ bid_service = BidService(adapter)
 auth_service = AuthService(adapter)
 
 
+# Login required decorator for employee views
+def login_required_employee(view_func):
+    """
+    Decorator to require employee login for views.
+    Redirects to login page if employee is not in session.
+    """
+    @wraps(view_func)
+    def wrapper(request, *args, **kwargs):
+        if not request.session.get('employee'):
+            return redirect('auctions:login')
+        return view_func(request, *args, **kwargs)
+    return wrapper
+
+
 def index(request):
-    return redirect('auctions:products_list')
+    # Check if employee is logged in
+    if request.session.get('employee'):
+        return redirect('auctions:products_list')
+    else:
+        return redirect('auctions:login')
 
 
+@login_required_employee
 def products_list(request):
     try:
         products = adapter.get_all_products()
@@ -107,6 +127,7 @@ def products_list(request):
 
 
 
+@login_required_employee
 def product_detail(request, product_id):
     try:
         product = adapter.get_product_by_id(product_id)
@@ -268,10 +289,9 @@ def login_view(request):
     return render(request, 'login.html')
 
 
+@login_required_employee
 def user_bids_list(request):
     employee = request.session.get('employee')
-    if not employee:
-        return redirect('auctions:login')
         
     try:
         bids = adapter.get_bids_for_employee(employee.get('employeeId'))
@@ -284,7 +304,7 @@ def user_bids_list(request):
 def logout_view(request):
     request.session.pop('employee', None)
     request.session.pop('is_admin', None)
-    return redirect('auctions:products_list')
+    return redirect('auctions:login')
 
 
 def admin_login(request):

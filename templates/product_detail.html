@@ -376,6 +376,17 @@ async function pollData() {
                 bidsCountEl.innerText = p.bids_count || 0;
             }
             
+            // Update highest bidder (display employee ID, not name)
+            const highestBidderEl = document.querySelector('[data-highest-bidder]');
+            if (highestBidderEl) {
+                if (data.highest_bidder && data.highest_bidder.id) {
+                    // Display employee ID only
+                    highestBidderEl.innerHTML = `<span class="text-blue-600 font-semibold">${data.highest_bidder.id}</span>`;
+                } else {
+                    highestBidderEl.innerText = '---';
+                }
+            }
+            
             // Update List
             const list = document.getElementById('bids-list');
             list.innerHTML = '';
