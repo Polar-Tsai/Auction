@@ -53,9 +53,25 @@ class ExcelAdapter:
 
         try:
             now = datetime.now()
-            # Handle ISO format Z or no Z
-            start_time = datetime.fromisoformat(start_str.replace('Z', '+00:00')) if 'T' in start_str else datetime.strptime(start_str, "%Y-%m-%d %H:%M")
-            end_time = datetime.fromisoformat(end_str.replace('Z', '+00:00')) if 'T' in end_str else datetime.strptime(end_str, "%Y-%m-%d %H:%M")
+            # Parse start_time - support both HH:MM and HH:MM:SS formats
+            if 'T' in start_str:
+                start_time = datetime.fromisoformat(start_str.replace('Z', '+00:00'))
+            else:
+                start_str_clean = start_str.strip()
+                try:
+                    start_time = datetime.strptime(start_str_clean, "%Y-%m-%d %H:%M:%S")
+                except ValueError:
+                    start_time = datetime.strptime(start_str_clean, "%Y-%m-%d %H:%M")
+            
+            # Parse end_time - support both HH:MM and HH:MM:SS formats
+            if 'T' in end_str:
+                end_time = datetime.fromisoformat(end_str.replace('Z', '+00:00'))
+            else:
+                end_str_clean = end_str.strip()
+                try:
+                    end_time = datetime.strptime(end_str_clean, "%Y-%m-%d %H:%M:%S")
+                except ValueError:
+                    end_time = datetime.strptime(end_str_clean, "%Y-%m-%d %H:%M")
             
             # Naive to aware conversion if needed, assuming UTC for now as per code
             # But wait, datetime.utcnow() is naive. So let's keep everything naive or aware.
@@ -112,9 +128,24 @@ class ExcelAdapter:
         # Convert strings to datetime objects for template formatting
         try:
             if 'end_time' in product and isinstance(product['end_time'], str):
-                product['end_time'] = datetime.fromisoformat(product['end_time'].replace('Z', '+00:00')) if 'T' in product['end_time'] else datetime.strptime(product['end_time'], "%Y-%m-%d %H:%M")
+                if 'T' in product['end_time']:
+                    product['end_time'] = datetime.fromisoformat(product['end_time'].replace('Z', '+00:00'))
+                else:
+                    end_time_clean = product['end_time'].strip()
+                    try:
+                        product['end_time'] = datetime.strptime(end_time_clean, "%Y-%m-%d %H:%M:%S")
+                    except ValueError:
+                        product['end_time'] = datetime.strptime(end_time_clean, "%Y-%m-%d %H:%M")
+            
             if 'start_time' in product and isinstance(product['start_time'], str):
-                product['start_time'] = datetime.fromisoformat(product['start_time'].replace('Z', '+00:00')) if 'T' in product['start_time'] else datetime.strptime(product['start_time'], "%Y-%m-%d %H:%M")
+                if 'T' in product['start_time']:
+                    product['start_time'] = datetime.fromisoformat(product['start_time'].replace('Z', '+00:00'))
+                else:
+                    start_time_clean = product['start_time'].strip()
+                    try:
+                        product['start_time'] = datetime.strptime(start_time_clean, "%Y-%m-%d %H:%M:%S")
+                    except ValueError:
+                        product['start_time'] = datetime.strptime(start_time_clean, "%Y-%m-%d %H:%M")
         except:
             pass # Keep as strings if parse fails
         return product

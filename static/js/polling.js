@@ -86,11 +86,20 @@ class ProductListPoller {
                 this.updateWinner(card, newData.winner_name);
             }
 
+            // Check and update end_time (for anti-sniper time extension)
+            const oldEndTime = card.dataset.end;
+            if (newData.end_time && newData.end_time !== oldEndTime) {
+                this.updateEndTime(card, newData.end_time);
+            }
+
             // Update data attributes
             card.dataset.price = newData.current_price;
             card.dataset.bidsCount = newData.bids_count;
             card.dataset.status = newData.status;
             card.dataset.winner = newData.winner_name || '';
+            if (newData.end_time) {
+                card.dataset.end = newData.end_time;
+            }
         });
     }
 
@@ -115,6 +124,16 @@ class ProductListPoller {
         // Get translated text for "次出價"
         const bidsText = bidsElement.textContent.match(/\d+(.+)/)?.[1] || '次出價';
         bidsElement.textContent = `${newCount}${bidsText}`;
+    }
+
+    updateEndTime(card, newEndTime) {
+        const productId = card.dataset.productId;
+        const oldEndTime = card.dataset.end;
+
+        console.log(`⏰ Anti-sniper: End time updated for product ${productId}: ${oldEndTime} → ${newEndTime}`);
+
+        // Update the data attribute - the countdown timer will pick up the new time on next cycle
+        card.dataset.end = newEndTime;
     }
 
     updateStatus(card, newStatus, productData) {

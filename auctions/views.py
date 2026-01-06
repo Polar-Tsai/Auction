@@ -248,6 +248,17 @@ def products_poll(request):
                 product['highest_bidder_id'] = None
                 product['winner_name'] = None
         
+        # Ensure end_time format is consistent (YYYY-MM-DD HH:MM:SS)
+        for product in products:
+            end_time = product.get('end_time')
+            if end_time:
+                if isinstance(end_time, datetime):
+                    product['end_time'] = end_time.strftime("%Y-%m-%d %H:%M:%S")
+                elif isinstance(end_time, str):
+                    # Add :00 seconds if missing (format is YYYY-MM-DD HH:MM)
+                    if len(end_time.strip()) == 16:
+                        product['end_time'] = end_time.strip() + ':00'
+        
         # Calculate status counts
         status_counts = {'Open': 0, 'Closed': 0, 'Upcoming': 0}
         for product in products:

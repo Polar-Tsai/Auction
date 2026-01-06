@@ -38,18 +38,24 @@ class BidService:
                     if isinstance(end_time_str, datetime):
                         end_time = end_time_str
                     else:
-                        # Parse string (format: "YYYY-MM-DD HH:MM")
-                        end_time = datetime.strptime(str(end_time_str), "%Y-%m-%d %H:%M")
+                        # Parse string (format: "YYYY-MM-DD HH:MM" or "YYYY-MM-DD HH:MM:SS")
+                        end_time_str_clean = str(end_time_str).strip()
+                        try:
+                            # Try with seconds first
+                            end_time = datetime.strptime(end_time_str_clean, "%Y-%m-%d %H:%M:%S")
+                        except ValueError:
+                            # Fall back to minutes only
+                            end_time = datetime.strptime(end_time_str_clean, "%Y-%m-%d %H:%M")
                     
                     current_time = datetime.now()
                     time_remaining = (end_time - current_time).total_seconds()
                     
                     # If bid within threshold and auction hasn't ended yet
                     if 0 < time_remaining < ANTI_SNIPER_THRESHOLD_SECONDS:
-                        # Extend the auction by ANTI_SNIPER_EXTEND_SECONDS
-                        new_end_time = current_time + timedelta(seconds=ANTI_SNIPER_EXTEND_SECONDS)
+                        # Extend the auction by ANTI_SNIPER_EXTEND_SECONDS from the original end time
+                        new_end_time = end_time + timedelta(seconds=ANTI_SNIPER_EXTEND_SECONDS)
                         self.adapter.update_product(product_id, {
-                            'end_time': new_end_time.strftime("%Y-%m-%d %H:%M")
+                            'end_time': new_end_time.strftime("%Y-%m-%d %H:%M:%S")
                         })
                         
                         result['time_extended'] = True

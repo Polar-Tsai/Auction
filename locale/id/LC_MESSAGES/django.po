@@ -172,6 +172,10 @@ msgstr "Penawaran gagal"
 
 msgid "網路錯誤，請稍後重試"
 msgstr "Kesalahan jaringan, silakan coba lagi nanti"
+
+msgid "⏰ 競標時間已延長"
+msgstr "⏰ Waktu lelang diperpanjang"
+
 # New translations for password and bidding features
 msgid "密碼"
 msgstr "Kata Sandi"

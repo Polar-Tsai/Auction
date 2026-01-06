@@ -159,6 +159,10 @@ msgstr "出價失敗"
 
 msgid "網路錯誤，請稍後重試"
 msgstr "網路錯誤，請稍後重試"
+
+msgid "⏰ 競標時間已延長"
+msgstr "⏰ 競標時間已延長"
+
 # New translations for password and bidding features
 msgid "密碼"
 msgstr "密碼"
