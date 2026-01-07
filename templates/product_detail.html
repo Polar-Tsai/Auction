@@ -155,11 +155,11 @@
                     {% else %}{{ product.status }}{% endif %}
                 </span>
 
-                <h1 class="text-3xl font-bold text-gray-900 mb-6">{{ product.name }}</h1>
+                <h1 class="text-3xl font-bold text-gray-900 mb-6 pr-32">{{ product.name }}</h1>
                 
                 <!-- Description -->
                 <div class="flex items-start mb-6">
-                    <span class="text-gray-900 font-bold whitespace-nowrap mr-8">{% trans "AI 描述" %}</span>
+                    <span class="text-gray-900 font-bold whitespace-nowrap mr-8">{% trans "商品描述" %}</span>
                     <p class="text-gray-700 leading-relaxed max-w-lg">
                         {{ product.description|default:"超稀有 2018 Topps Diamond Icons 日本傳奇 鈴木一朗 松井秀喜 紅版 雙人簽名卡 限量 2/5 紐約洋基 名人堂" }}
                     </p>
@@ -278,6 +278,7 @@ const i18n = {
   minute: "{% trans '分' %}",
   second: "{% trans '秒' %}",
   end: "{% trans '結束' %}",
+  start: "{% trans '開始' %}",
   ended: "{% trans '已結束' %}",
   pleaseEnterAmount: "{% trans '請輸入金額' %}",
   bidSuccess: "{% trans '出價成功！目前價格' %}",
@@ -289,6 +290,8 @@ const i18n = {
 
 const productId = {{ product.id }};
 let endTimeStr = "{{ product.end_time|date:'Y-m-d H:i:s' }}";  // Use let so it can be updated
+const startTimeStr = "{{ product.start_time|date:'Y-m-d H:i:s' }}";
+const productStatus = "{{ product.status }}";
 const bidIncrement = {{ bid_increment }};  // Increment value from backend
 const startPrice = {{ product.start_price }};  // Start price (底價)
 const REFRESH_INTERVAL = 1000;  // Poll every 1 second for real-time updates
@@ -328,7 +331,9 @@ function updateCountdown() {
     const m = Math.floor((dist % (1000 * 60 * 60)) / (1000 * 60));
     const s = Math.floor((dist % (1000 * 60)) / 1000);
     
-    el.innerText = `${h}${i18n.hour}${m}${i18n.minute}${s}${i18n.second}${i18n.end}`;
+    // Determine if we're counting down to start or end
+    const countdownAction = (productStatus === 'Upcoming') ? i18n.start : i18n.end;
+    el.innerText = `${h}${i18n.hour}${m}${i18n.minute}${s}${i18n.second}後${countdownAction}`;
 }
 
 function showToast(message, type='info') {
