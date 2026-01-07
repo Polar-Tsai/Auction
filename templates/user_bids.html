@@ -1,44 +1,86 @@
 {% extends 'base.html' %}
 {% load i18n %}
 {% block content %}
-<div class="max-w-4xl mx-auto bg-white p-6 rounded shadow">
-    <h1 class="text-2xl font-bold mb-6 border-b pb-2 text-gray-800">{% trans "個人出價紀錄" %}</h1>
+<div class="max-w-4xl mx-auto p-6">
+    <h1 class="text-2xl font-bold mb-2 pb-2 text-gray-800 border-b">{% trans "個人出價紀錄" %}</h1>
+    <p class="text-sm text-gray-500 mb-6">⭐ {% trans "表示你得標了" %}</p>
     
     {% if bids %}
-    <div class="overflow-x-auto">
-        <table class="w-full text-left border-collapse">
-            <thead>
-                <tr class="bg-gray-100 text-gray-600 text-sm uppercas tracking-wider">
-                    <th class="p-4 border-b">{% trans "日期時間" %}</th>
-                    <th class="p-4 border-b">{% trans "商品名稱" %}</th>
-                    <th class="p-4 border-b">{% trans "出價金額" %}</th>
-                </tr>
-            </thead>
-            <tbody class="text-gray-700">
-                {% for bid in bids %}
-                <tr class="hover:bg-gray-50 border-b last:border-0 transition">
-                    <td class="p-4 text-sm">{{ bid.bid_timestamp|slice:":10" }} {{ bid.bid_timestamp|slice:"11:19" }}</td>
-                    <td class="p-4 font-medium">
-                        <a href="{% url 'auctions:product_detail' bid.product_id %}" class="text-blue-600 hover:underline hover:text-blue-800 transition">
-                            {{ bid.product_name }}
-                        </a>
-                    </td>
-                    <td class="p-4 font-mono text-blue-600">
-                        NT$ {{ bid.amount }}
-                        {% if bid.is_winning %}
-                            <span class="ml-2 text-yellow-500" title="{% trans '得標中' %}">⭐</span>
-                        {% endif %}
-                    </td>
-                </tr>
-                {% endfor %}
-            </tbody>
-        </table>
+    <div class="space-y-2">
+        {% for product in bids %}
+        <div class="bg-white rounded-lg overflow-hidden">
+            <!-- Product Header (Clickable) -->
+            <div class="p-4 cursor-pointer hover:bg-gray-50 transition flex items-center justify-between"
+                 onclick="toggleProduct({{ product.product_id }})">
+                <div class="flex items-center gap-3 flex-1">
+                    <!-- Toggle Icon -->
+                    <svg id="icon-{{ product.product_id }}" 
+                         class="w-4 h-4 text-gray-500 transform transition-transform" 
+                         fill="none" 
+                         stroke="currentColor" 
+                         viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/>
+                    </svg>
+                    
+                    <!-- Product Name with Link -->
+                    <a href="{% url 'auctions:product_detail' product.product_id %}" 
+                       class="font-bold hover:underline"
+                       style="color: #1E40AF;"
+                       onclick="event.stopPropagation();">
+                        {{ product.product_name }}
+                    </a>
+                    
+                    <!-- Bid Count -->
+                    <span class="text-sm text-gray-500">({{ product.bid_count }}{% trans "筆" %})</span>
+                    
+                    <!-- Winning Star -->
+                    {% if product.is_winning %}
+                    <span class="text-yellow-500" title="{% trans '得標中' %}">⭐</span>
+                    {% endif %}
+                </div>
+            </div>
+            
+            <!-- Bids List (Collapsible) -->
+            <div id="bids-{{ product.product_id }}" 
+                 class="hidden border-t border-gray-100">
+                <table class="w-full">
+                    <tbody>
+                        {% for bid in product.bids %}
+                        <tr class="hover:bg-gray-50 transition">
+                            <td class="p-4 text-sm text-gray-600">
+                                {{ bid.bid_timestamp|slice:":10" }} {{ bid.bid_timestamp|slice:"11:19" }}
+                            </td>
+                            <td class="p-4 text-right font-mono" style="color: #1E40AF;">
+                                NT$ {{ bid.amount }}
+                      </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+        {% endfor %}
     </div>
     {% else %}
     <div class="text-center py-12 bg-gray-50 rounded border border-dashed border-gray-300">
         <p class="text-gray-500 mb-2">{% trans "您目前還沒有任何出價紀錄" %}</p>
-        <a href="{% url 'auctions:products_list' %}" class="text-blue-600 hover:underline">{% trans "前往瀏覽商品" %}</a>
+        <a href="{% url 'auctions:products_list' %}" style="color: #1E40AF;" class="hover:underline">{% trans "前往瀏覽商品" %}</a>
     </div>
     {% endif %}
 </div>
+
+<script>
+function toggleProduct(productId) {
+    const content = document.getElementById('bids-' + productId);
+    const icon = document.getElementById('icon-' + productId);
+    
+    if (content.classList.contains('hidden')) {
+        content.classList.remove('hidden');
+        icon.classList.add('rotate-90');
+    } else {
+        content.classList.add('hidden');
+        icon.classList.remove('rotate-90');
+    }
+}
+</script>
 {% endblock %}

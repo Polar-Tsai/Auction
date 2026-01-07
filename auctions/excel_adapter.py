@@ -217,9 +217,13 @@ class ExcelAdapter:
             if pid not in product_highest_bids or amount > product_highest_bids[pid]:
                 product_highest_bids[pid] = amount
         
+        # Group bids by product
+        from collections import defaultdict
+        grouped_bids = defaultdict(lambda: {'bids': []})
+        
         for b in bids:
             pid = b.get('product_id')
-            b['product_name'] = prod_map.get(pid, f'Unknown Product ({pid})')
+            product_name = prod_map.get(pid, f'Unknown Product ({pid})')
             
             # Determine if this bid is a winning bid
             highest_bidder = str(highest_bidder_map.get(pid, ''))
@@ -230,13 +234,33 @@ class ExcelAdapter:
             # 1. This employee is the highest bidder for the product
             # 2. This is the employee's highest bid on this product
             # 3. Product is not marked as "Unsold" (流標)
-            b['is_winning'] = (
+            is_winning = (
                 str(employee_id) == highest_bidder and 
                 is_highest_for_employee and
                 product_status != 'Unsold'
             )
             
-        return bids
+            # Add to grouped structure
+            if 'product_name' not in grouped_bids[pid]:
+                grouped_bids[pid]['product_id'] = pid
+                grouped_bids[pid]['product_name'] = product_name
+                grouped_bids[pid]['is_winning'] = is_winning
+            
+            grouped_bids[pid]['bids'].append({
+                'amount': b.get('amount'),
+                'bid_timestamp': b.get('bid_timestamp')
+            })
+        
+        # Convert to list and add bid counts
+        result = []
+        for pid, data in grouped_bids.items():
+            data['bid_count'] = len(data['bids'])
+            result.append(data)
+        
+        # Sort by latest bid timestamp (first bid in each group)
+        result.sort(key=lambda x: x['bids'][0]['bid_timestamp'] if x['bids'] else '', reverse=True)
+        
+        return result
 
     def save_bid(self, product_id, employee_id, amount):
         """
