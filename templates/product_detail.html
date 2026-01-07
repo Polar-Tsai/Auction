@@ -6,6 +6,36 @@
 <!-- Include Polling CSS -->
 <link rel="stylesheet" href="{% static 'css/polling-animations.css' %}">
 
+<!-- Responsive Bid Area CSS -->
+<style>
+  /* Mobile: Floating bid area at bottom */
+  @media (orientation: portrait) {
+    #bid-area {
+      position: fixed !important;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      z-index: 100;
+      border-radius: 1rem 1rem 0 0 !important;
+      box-shadow: 0 -4px 6px rgba(0,0,0,0.1);
+      max-width: 100%;
+      margin: 0 !important;
+    }
+    
+    /* Add padding to content to prevent overlap */
+    .max-w-6xl {
+      padding-bottom: 200px !important;
+    }
+  }
+  
+  /* Desktop: Keep bid area in normal flow */
+  @media (orientation: landscape) {
+    #bid-area {
+      position: static;
+    }
+  }
+</style>
+
 <!-- Include Polling JavaScript -->
 <script src="{% static 'js/polling.js' %}"></script>
 
@@ -40,7 +70,7 @@
                         {% for img in images %}
                         <div class="flex-none w-1/4 px-2 aspect-square cursor-pointer" 
                              onclick="updateMainImage('/data_photo/{{ product.id }}/{{ img }}')">
-                            <div class="w-full h-full rounded border border-transparent hover:border-blue-600 overflow-hidden bg-gray-100">
+                            <div class="w-full h-full rounded border border-transparent hover:border-[#1E40AF] overflow-hidden bg-gray-100">
                                 <img src="/data_photo/{{ product.id }}/{{ img }}" class="w-full h-full object-cover">
                             </div>
                         </div>
@@ -116,8 +146,8 @@
                  <!-- Status Badge top right of this col -->
                  <span id="status-display" class="absolute top-0 right-0 px-3 py-1 rounded-full text-sm font-medium
                     {% if product.status == 'Open' %}bg-green-100 text-green-800
-                    {% elif product.status == 'Upcoming' %}bg-blue-100 text-blue-800
-                    {% else %}bg-gray-100 text-gray-800{% endif %}">
+                    {% elif product.status == 'Upcoming' %}text-white{% endif %}"
+                    {% if product.status == 'Upcoming' %}style="background-color: #1E40AF;"{% elif product.status == 'Closed' or product.status == 'Unsold' %}class="bg-gray-100 text-gray-800"{% endif %}>
                     {% if product.status == 'Open' %}{% trans "競標中" %}
                     {% elif product.status == 'Upcoming' %}{% trans "即將開始" %}
                     {% elif product.status == 'Closed' %}{% trans "已結束" %}
@@ -139,10 +169,10 @@
                 <div class="flex items-center mb-2">
                     <span class="text-gray-900 font-bold whitespace-nowrap mr-8">{% trans "目前價格" %}</span>
                     <div class="flex items-baseline gap-4">
-                        <span class="text-3xl font-bold text-blue-600" data-price-display>
+                        <span class="text-3xl font-bold" style="color: #1E40AF;" data-price-display>
                             $<span id="current-price">{{ product.current_price|default:product.start_price }}</span>
                         </span>
-                        <a href="#history" class="text-blue-500 underline text-sm" data-bids-count-display><span id="bids-count">{{ product.bids_count|default:0 }}</span>{% trans "次出價" %}</a>
+                        <a href="#history" class="underline text-sm" style="color: #1E40AF;" data-bids-count-display><span id="bids-count">{{ product.bids_count|default:0 }}</span>{% trans "次出價" %}</a>
                     </div>
                 </div>
 
@@ -164,7 +194,7 @@
                 </div>
 
                 <!-- Bidding Area -->
-                <div class="{% if product.status == 'Open' %}bg-gray-200{% else %}bg-gray-100{% endif %} p-6 rounded-lg">
+                <div id="bid-area" class="{% if product.status == 'Open' %}bg-gray-200{% else %}bg-gray-100{% endif %} p-6 rounded-lg">
                     {% if employee %}
                         <!-- Display current login info -->
                         <div class="text-sm text-gray-600 mb-4">
@@ -180,7 +210,7 @@
                                     </div>
                                     <div>
                                         <span class="text-gray-600">{% trans "下次出價" %}:</span>
-                                        <div class="text-2xl font-bold text-blue-600 mt-1">
+                                        <div class="text-2xl font-bold mt-1" style="color: #1E40AF;">
                                             {% if product.bids_count == 0 %}
                                                 $<span id="next-bid-amount">{{ product.start_price }}</span>
                                                 <span class="text-sm text-gray-500">({% trans "底價" %})</span>
@@ -192,7 +222,7 @@
                                     </div>
                                 </div>
                                 
-                                <button onclick="placeBid()" class="w-full bg-gradient-to-b from-yellow-300 to-yellow-500 hover:from-yellow-400 hover:to-yellow-600 text-black font-bold py-4 text-lg rounded shadow-md border border-yellow-600 transform transition active:scale-95">
+                                <button onclick="placeBid()" class="w-full text-white font-bold py-4 text-lg rounded-full shadow-md transform transition active:scale-95" style="background-color: #1E40AF;" onmouseover="this.style.backgroundColor='#1a3a9e'" onmouseout="this.style.backgroundColor='#1E40AF'">
                                     {% if product.bids_count == 0 %}
                                         {% trans "出價" %} ${{ product.start_price }}
                                     {% else %}
