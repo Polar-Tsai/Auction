@@ -197,17 +197,44 @@ class ExcelAdapter:
         
         bids = res.to_dict(orient='records')
         
-        # Enrich with product name
+        # Enrich with product name, highest_bidder_id, and status
         if not bids:
             return []
             
         df_prod = pd.read_csv(self.products_path, encoding='utf-8-sig')
-        # Create a map of id -> name
+        df_prod = df_prod.fillna('')
+        
+        # Create maps for product information
         prod_map = df_prod.set_index('id')['name'].to_dict()
+        highest_bidder_map = df_prod.set_index('id')['highest_bidder_id'].to_dict()
+        status_map = df_prod.set_index('id')['status'].to_dict()
+        
+        # Track the highest bid per product for this employee
+        product_highest_bids = {}
+        for b in bids:
+            pid = b.get('product_id')
+            amount = b.get('amount', 0)
+            if pid not in product_highest_bids or amount > product_highest_bids[pid]:
+                product_highest_bids[pid] = amount
         
         for b in bids:
             pid = b.get('product_id')
             b['product_name'] = prod_map.get(pid, f'Unknown Product ({pid})')
+            
+            # Determine if this bid is a winning bid
+            highest_bidder = str(highest_bidder_map.get(pid, ''))
+            product_status = str(status_map.get(pid, ''))
+            is_highest_for_employee = (b.get('amount', 0) == product_highest_bids.get(pid, -1))
+            
+            # Winning conditions:
+            # 1. This employee is the highest bidder for the product
+            # 2. This is the employee's highest bid on this product
+            # 3. Product is not marked as "Unsold" (流標)
+            b['is_winning'] = (
+                str(employee_id) == highest_bidder and 
+                is_highest_for_employee and
+                product_status != 'Unsold'
+            )
             
         return bids
 

@@ -18,8 +18,17 @@
                 {% for bid in bids %}
                 <tr class="hover:bg-gray-50 border-b last:border-0 transition">
                     <td class="p-4 text-sm">{{ bid.bid_timestamp|slice:":10" }} {{ bid.bid_timestamp|slice:"11:19" }}</td>
-                    <td class="p-4 font-medium">{{ bid.product_name }}</td>
-                    <td class="p-4 font-mono text-blue-600">NT$ {{ bid.amount }}</td>
+                    <td class="p-4 font-medium">
+                        <a href="{% url 'auctions:product_detail' bid.product_id %}" class="text-blue-600 hover:underline hover:text-blue-800 transition">
+                            {{ bid.product_name }}
+                        </a>
+                    </td>
+                    <td class="p-4 font-mono text-blue-600">
+                        NT$ {{ bid.amount }}
+                        {% if bid.is_winning %}
+                            <span class="ml-2 text-yellow-500" title="{% trans '得標中' %}">⭐</span>
+                        {% endif %}
+                    </td>
                 </tr>
                 {% endfor %}
             </tbody>
