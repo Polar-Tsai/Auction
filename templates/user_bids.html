@@ -22,20 +22,33 @@
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/>
                     </svg>
                     
-                    <!-- Product Name with Link -->
-                    <a href="{% url 'auctions:product_detail' product.product_id %}" 
-                       class="font-bold hover:underline"
-                       style="color: #1E40AF;"
-                       onclick="event.stopPropagation();">
-                        {{ product.product_name }}
-                    </a>
+                    <!-- Product Name with Smart Language Split & Mobile Truncation -->
+                    <div class="flex items-center gap-2 flex-1 min-w-0">
+                        <a href="{% url 'auctions:product_detail' product.product_id %}" 
+                           class="product-name-link font-bold hover:underline"
+                           style="color: #1E40AF;"
+                           onclick="event.stopPropagation();"
+                           data-full-name="{{ product.product_name }}"
+                           data-product-id="{{ product.product_id }}">
+                            <!-- Will be populated by JavaScript -->
+                            <span class="name-display">{{ product.product_name }}</span>
+                        </a>
+                        
+                        <!-- Mobile Expand Button (hidden on desktop) -->
+                        <button class="expand-btn text-gray-400 hover:text-gray-600 text-xs whitespace-nowrap hidden"
+                                onclick="event.stopPropagation(); toggleNameExpand({{ product.product_id }})"
+                                id="expand-btn-{{ product.product_id }}">
+                            <span class="expand-text">{% trans "展開" %}</span>
+                            <span class="collapse-text hidden">{% trans "收起" %}</span>
+                        </button>
+                    </div>
                     
                     <!-- Bid Count -->
-                    <span class="text-sm text-gray-500">({{ product.bid_count }}{% trans "筆" %})</span>
+                    <span class="text-sm text-gray-500 whitespace-nowrap">({{ product.bid_count }}{% trans "筆" %})</span>
                     
                     <!-- Winning Star -->
                     {% if product.is_winning %}
-                    <span class="text-yellow-500" title="{% trans '得標中' %}">⭐</span>
+                    <span class="text-yellow-500 whitespace-nowrap" title="{% trans '得標中' %}">⭐</span>
                     {% endif %}
                 </div>
             </div>
@@ -69,7 +82,128 @@
     {% endif %}
 </div>
 
+<style>
+/* Mobile: Truncate product names */
+@media (max-width: 768px) {
+    .product-name-link .name-display {
+        display: block;
+        max-width: 200px;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+    }
+    
+    .product-name-link.expanded .name-display {
+        max-width: none;
+        white-space: normal;
+        word-break: break-word;
+    }
+    
+    /* Show expand button on mobile */
+    .expand-btn {
+        display: inline-block !important;
+    }
+}
+
+/* Desktop: Hide expand button */
+@media (min-width: 769px) {
+    .expand-btn {
+        display: none !important;
+    }
+}
+</style>
+
 <script>
+// Get current language from URL
+function getCurrentLanguage() {
+    const path = window.location.pathname;
+    if (path.includes('/id/')) return 'id';  // Indonesian
+    return 'zh-hant';  // Default to Traditional Chinese
+}
+
+// Smart name splitting based on language
+function getLocalizedName(fullName, language) {
+    // Try to detect if name contains both Chinese and Latin characters
+    const hasChinese = /[\u4e00-\u9fa5]/.test(fullName);
+    const hasLatin = /[a-zA-Z]/.test(fullName);
+    
+    if (!hasChinese || !hasLatin) {
+        // If only one script, return as is
+        return fullName;
+    }
+    
+    // Split by common separators or patterns
+    // Pattern 1: "中文 English" - space separated
+    // Pattern 2: "中文😭圖 English" - emoji + space
+    const parts = fullName.split(/\s+/);
+    
+    if (parts.length < 2) return fullName;
+    
+    // Find the split point between Chinese and Latin parts
+    let chinesePart = [];
+    let latinPart = [];
+    
+    for (let part of parts) {
+        // Check if contains Chinese characters (including emoji which are high unicode)
+        if (/[\u4e00-\u9fa5]/.test(part) || /[\u{1F300}-\u{1F9FF}]/u.test(part)) {
+            // Contains Chinese characters or emoji
+            chinesePart.push(part);
+        } else if (/[a-zA-Z]/.test(part)) {
+            // Contains Latin characters
+            latinPart.push(part);
+        }
+    }
+    
+    if (language === 'zh-hant') {
+        return chinesePart.length > 0 ? chinesePart.join(' ') : fullName;
+    } else {
+        return latinPart.length > 0 ? latinPart.join(' ') : fullName;
+    }
+}
+
+// Initialize product names on page load
+function initializeProductNames() {
+    const language = getCurrentLanguage();
+    const links = document.querySelectorAll('.product-name-link');
+    
+    links.forEach(link => {
+        const fullName = link.getAttribute('data-full-name');
+        const nameDisplay = link.querySelector('.name-display');
+        
+        if (fullName && nameDisplay) {
+            const localizedName = getLocalizedName(fullName, language);
+            nameDisplay.textContent = localizedName;
+            
+            // Store both versions for toggle
+            link.setAttribute('data-localized-name', localizedName);
+        }
+    });
+}
+
+// Toggle name expansion on mobile
+function toggleNameExpand(productId) {
+    const link = document.querySelector(`[data-product-id="${productId}"]`);
+    const expandBtn = document.getElementById(`expand-btn-${productId}`);
+    
+    if (!link || !expandBtn) return;
+    
+    const expandText = expandBtn.querySelector('.expand-text');
+    const collapseText = expandBtn.querySelector('.collapse-text');
+    
+    if (link.classList.contains('expanded')) {
+        // Collapse
+        link.classList.remove('expanded');
+        expandText.classList.remove('hidden');
+        collapseText.classList.add('hidden');
+    } else {
+        // Expand
+        link.classList.add('expanded');
+        expandText.classList.add('hidden');
+        collapseText.classList.remove('hidden');
+    }
+}
+
+// Toggle product bid list
 function toggleProduct(productId) {
     const content = document.getElementById('bids-' + productId);
     const icon = document.getElementById('icon-' + productId);
@@ -82,5 +216,11 @@ function toggleProduct(productId) {
         icon.classList.remove('rotate-90');
     }
 }
+
+// Initialize on page load
+document.addEventListener('DOMContentLoaded', () => {
+    initializeProductNames();
+    console.log('✅ Product names initialized with language:', getCurrentLanguage());
+});
 </script>
 {% endblock %}

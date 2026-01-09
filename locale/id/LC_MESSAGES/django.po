@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: \n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-01-09 10:51+0800\n"
+"POT-Creation-Date: 2026-01-09 11:37+0800\n"
 "PO-Revision-Date: 2025-12-22 14:00+0800\n"
 "Last-Translator: \n"
 "Language-Team: \n"
@@ -88,7 +88,7 @@ msgid "即將開始"
 msgstr "Akan segera dimulai"
 
 #: .\templates\product_detail.html:153 .\templates\product_detail.html:239
-#: .\templates\product_detail.html:303 .\templates\products.html:175
+#: .\templates\product_detail.html:308 .\templates\products.html:175
 msgid "已結束"
 msgstr "Telah selesai"
 
@@ -171,66 +171,69 @@ msgstr "Waktu Penawaran"
 msgid "載入中..."
 msgstr "Memuat..."
 
-#: .\templates\product_detail.html:279
+#: .\templates\product_detail.html:284
 msgid "首次出價確認"
 msgstr "Konfirmasi Penawaran Pertama"
 
-#: .\templates\product_detail.html:282
+#: .\templates\product_detail.html:287
 msgid ""
 "這是您第一次參加競標，點擊確認即表示您同意參與競標活動。一旦確認後，您的出價"
 "將會被記錄。"
-msgstr "Ini adalah penawaran pertama Anda. Dengan mengklik konfirmasi, Anda setuju untuk berpartisipasi dalam lelang. Setelah dikonfirmasi, penawaran Anda akan dicatat."
+msgstr ""
+"Ini adalah penawaran pertama Anda. Dengan mengklik konfirmasi, Anda setuju "
+"untuk berpartisipasi dalam lelang. Setelah dikonfirmasi, penawaran Anda akan "
+"dicatat."
 
-#: .\templates\product_detail.html:286
+#: .\templates\product_detail.html:291
 msgid "取消"
 msgstr "Batal"
 
-#: .\templates\product_detail.html:289
+#: .\templates\product_detail.html:294
 msgid "我確認參加"
 msgstr "Saya Konfirmasi"
 
-#: .\templates\product_detail.html:298 .\templates\products.html:170
+#: .\templates\product_detail.html:303 .\templates\products.html:170
 msgid "時"
 msgstr "jam"
 
-#: .\templates\product_detail.html:299 .\templates\products.html:171
+#: .\templates\product_detail.html:304 .\templates\products.html:171
 msgid "分"
 msgstr "menit"
 
-#: .\templates\product_detail.html:300 .\templates\products.html:172
+#: .\templates\product_detail.html:305 .\templates\products.html:172
 msgid "秒"
 msgstr "detik"
 
-#: .\templates\product_detail.html:301 .\templates\products.html:173
+#: .\templates\product_detail.html:306 .\templates\products.html:173
 msgid "結束"
 msgstr "selesai"
 
-#: .\templates\product_detail.html:302 .\templates\products.html:174
+#: .\templates\product_detail.html:307 .\templates\products.html:174
 msgid "開始"
 msgstr "dimulai"
 
 # JavaScript Messages
-#: .\templates\product_detail.html:304
+#: .\templates\product_detail.html:309
 msgid "請輸入金額"
 msgstr "Silakan masukkan jumlah"
 
-#: .\templates\product_detail.html:305
+#: .\templates\product_detail.html:310
 msgid "出價成功！目前價格"
 msgstr "Penawaran berhasil! Harga saat ini"
 
-#: .\templates\product_detail.html:306
+#: .\templates\product_detail.html:311
 msgid "出價失敗"
 msgstr "Penawaran gagal"
 
-#: .\templates\product_detail.html:307
+#: .\templates\product_detail.html:312
 msgid "網路錯誤，請稍後重試"
 msgstr "Kesalahan jaringan, silakan coba lagi nanti"
 
-#: .\templates\product_detail.html:308
+#: .\templates\product_detail.html:313
 msgid "目前尚無出價，成為第一個出價者！"
 msgstr "Belum ada penawaran, jadilah yang pertama!"
 
-#: .\templates\product_detail.html:309
+#: .\templates\product_detail.html:314
 msgid "⏰ 競標時間已延長"
 msgstr "⏰ Waktu lelang diperpanjang"
 
@@ -284,23 +287,31 @@ msgstr "Riwayat Penawaran Pribadi"
 
 #: .\templates\user_bids.html:6
 msgid "表示你得標了"
-msgstr ""
+msgstr "Menandakan Anda memenangkan lelang"
 
-#: .\templates\user_bids.html:34
+#: .\templates\user_bids.html:41
+msgid "展開"
+msgstr "Perluas"
+
+#: .\templates\user_bids.html:42
+msgid "收起"
+msgstr "Ciutkan"
+
+#: .\templates\user_bids.html:47
 msgid "筆"
-msgstr ""
+msgstr "penawaran"
 
-#: .\templates\user_bids.html:38
+#: .\templates\user_bids.html:51
 #, fuzzy
 #| msgid "得標者"
 msgid "得標中"
 msgstr "Pemenang"
 
-#: .\templates\user_bids.html:66
+#: .\templates\user_bids.html:79
 msgid "您目前還沒有任何出價紀錄"
 msgstr "Anda belum memiliki riwayat penawaran"
 
-#: .\templates\user_bids.html:67
+#: .\templates\user_bids.html:80
 msgid "前往瀏覽商品"
 msgstr "Lihat produk"
 

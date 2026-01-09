@@ -189,7 +189,9 @@ class ExcelAdapter:
         return res.head(limit).to_dict(orient='records')
 
     def get_bids_for_employee(self, employee_id):
-        df_bids = pd.read_csv(self.bids_path, encoding='utf-8-sig')
+        # Specify dtypes to ensure product_id is integer, not float
+        df_bids = pd.read_csv(self.bids_path, encoding='utf-8-sig', 
+                             dtype={'product_id': 'Int64'})  # Use Int64 to handle NaN
         # Filter by bidder_id (employee_id should be string usually, but let's ensure type safety)
         # In save_bid we saved it as is. In login we stored it as string/from csv.
         # Let's ensure comparison works.
@@ -201,7 +203,8 @@ class ExcelAdapter:
         if not bids:
             return []
             
-        df_prod = pd.read_csv(self.products_path, encoding='utf-8-sig')
+        df_prod = pd.read_csv(self.products_path, encoding='utf-8-sig',
+                             dtype={'id': 'Int64'})  # Ensure product id is integer
         df_prod = df_prod.fillna('')
         
         # Create maps for product information
@@ -242,7 +245,7 @@ class ExcelAdapter:
             
             # Add to grouped structure
             if 'product_name' not in grouped_bids[pid]:
-                grouped_bids[pid]['product_id'] = pid
+                grouped_bids[pid]['product_id'] = int(pid)  # Convert to int for URL reverse
                 grouped_bids[pid]['product_name'] = product_name
                 grouped_bids[pid]['is_winning'] = is_winning
             
