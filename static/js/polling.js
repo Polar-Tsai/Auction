@@ -81,6 +81,11 @@ class ProductListPoller {
                 this.updateStatus(card, newData.status, newData);
             }
 
+            // Update highest bidder for open items
+            if (newData.status === 'Open') {
+                this.updateHighestBidder(card, newData.highest_bidder_id);
+            }
+
             // Update winner information for closed items
             if (['Closed', 'Ended', 'Unsold'].includes(newData.status)) {
                 this.updateWinner(card, newData.winner_name);
@@ -201,6 +206,32 @@ class ProductListPoller {
 
         card.dataset.winner = winnerName || '';
     }
+
+    updateHighestBidder(card, bidderId) {
+        const bidderDisplay = card.querySelector('.highest-bidder-display');
+        if (!bidderDisplay) return;
+
+        const bidderSpan = bidderDisplay.querySelector('span:last-child');
+        if (!bidderSpan) return;
+
+        // Get the current bidder ID from the display
+        const currentText = bidderSpan.textContent;
+        const currentBidderId = currentText.split(': ')[1];
+
+        // Only update if changed
+        if (currentBidderId === bidderId) return;
+
+        // Update the bidder ID
+        const highestBidLabel = currentText.split(': ')[0];
+        bidderSpan.textContent = `${highestBidLabel}: ${bidderId || '---'}`;
+
+        // Add animation
+        bidderDisplay.classList.add('price-updated');
+        setTimeout(() => {
+            bidderDisplay.classList.remove('price-updated');
+        }, 500);
+    }
+
 
     updateStatusCounts(counts) {
         Object.keys(counts).forEach(status => {
