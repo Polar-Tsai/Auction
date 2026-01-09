@@ -337,6 +337,28 @@ def admin_login(request):
     return render(request, 'admin_login.html')
 
 
+def check_first_bid(request):
+    """
+    API endpoint to check if the current user is making their first bid.
+    Used for first-time bid confirmation feature.
+    """
+    try:
+        employee = request.session.get('employee')
+        if not employee:
+            return JsonResponse({'success': False, 'message': 'NOT_LOGGED_IN'}, status=401)
+        
+        bidder_id = employee.get('employeeId')
+        has_bids = adapter.user_has_any_bids(bidder_id)
+        
+        return JsonResponse({
+            'success': True,
+            'is_first_bid': not has_bids  # True if user has NO bids (first time)
+        })
+    except Exception as e:
+        logger.error("Error checking first bid status", exc_info=True)
+        return JsonResponse({'success': False, 'message': 'INTERNAL_ERROR'}, status=500)
+
+
 @csrf_exempt
 def place_bid(request):
     if request.method != 'POST':

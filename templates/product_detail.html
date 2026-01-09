@@ -271,6 +271,32 @@
     </div>
 </div>
 
+<!-- First Bid Confirmation Modal -->
+<div id="firstBidModal" class="fixed inset-0 bg-black bg-opacity-50 hidden items-center justify-center z-50" style="display: none; z-index: 200;">
+  <div class="bg-white rounded-lg p-6 max-w-sm mx-4 shadow-xl">
+    <div class="text-center mb-4">
+      <!-- Blue i icon -->
+      <div class="flex justify-center mb-3">
+        <div class="w-16 h-16 rounded-full flex items-center justify-center" style="background-color: #1E40AF;">
+          <span class="text-white text-4xl font-bold">i</span>
+        </div>
+      </div>
+      <h3 class="text-xl font-bold text-gray-900 mb-2">{% trans "首次出價確認" %}</h3>
+    </div>
+    <p class="text-gray-700 text-sm mb-6 text-center leading-relaxed">
+      {% trans "這是您第一次參加競標，點擊確認即表示您同意參與競標活動。一旦確認後，您的出價將會被記錄。" %}
+    </p>
+    <div class="flex gap-3">
+      <button id="cancelFirstBid" class="flex-1 py-2.5 border-2 border-gray-300 rounded-full font-bold text-gray-700 hover:bg-gray-50 transition">
+        {% trans "取消" %}
+      </button>
+      <button id="confirmFirstBid" class="flex-1 py-2.5 rounded-full font-bold text-white transition" style="background-color: #1E40AF;" onmouseover="this.style.backgroundColor='#1a3a9e'" onmouseout="this.style.backgroundColor='#1E40AF'">
+        {% trans "我確認參加" %}
+      </button>
+    </div>
+  </div>
+</div>
+
 <script>
 // Translation strings
 const i18n = {
@@ -352,6 +378,26 @@ function showToast(message, type='info') {
     }, 3000);
 }
 
+// Modal control functions
+function showFirstBidModal() {
+    const modal = document.getElementById('firstBidModal');
+    if (modal) {
+        modal.style.display = 'flex';
+        modal.classList.remove('hidden');
+    }
+}
+
+function hideFirstBidModal() {
+    const modal = document.getElementById('firstBidModal');
+    if (modal) {
+        modal.style.display = 'none';
+        modal.classList.add('hidden');
+    }
+}
+
+// Store the pending bid amount for when user confirms
+let pendingBidAmount = null;
+
 async function placeBid() {
     // Auto-calculate bid amount
     const currentPriceEl = document.getElementById('current-price-display');
@@ -365,6 +411,32 @@ async function placeBid() {
     if (bidButton.disabled) return;
     bidButton.disabled = true;
     
+    try {
+        // Check if this is user's first bid
+        const langPrefix = window.location.pathname.split('/')[1];
+        const checkRes = await fetch(`/${langPrefix}/api/check-first-bid/`);
+        const checkData = await checkRes.json();
+        
+        if (checkData.success && checkData.is_first_bid) {
+            // This is the user's first bid - show confirmation modal
+            pendingBidAmount = amount;
+            showFirstBidModal();
+            bidButton.disabled = false;  // Re-enable button since we're showing modal
+            return;
+        }
+        
+        // Not first bid or check failed - proceed with bid directly
+        await submitBid(amount, bidButton);
+        
+    } catch (e) {
+        console.error('Error checking first bid:', e);
+        // If check fails, proceed with bid anyway
+        await submitBid(amount, bidButton);
+    }
+}
+
+// Actual bid submission function
+async function submitBid(amount, bidButton) {
     try {
         const langPrefix = window.location.pathname.split('/')[1];
         const res = await fetch(`/${langPrefix}/api/bids/`, {
@@ -388,6 +460,7 @@ async function placeBid() {
             
             // Immediately update UI with new price
             const newPrice = data.newPrice || amount;
+            const currentPriceEl = document.getElementById('current-price-display');
             if (currentPriceEl) {
                 currentPriceEl.textContent = '$' + newPrice;
             }
@@ -519,6 +592,32 @@ document.addEventListener('DOMContentLoaded', () => {
     // Keep countdown timer
     setInterval(updateCountdown, 1000);
     updateCountdown();
+
+    // Setup first-bid modal event listeners
+    const confirmBtn = document.getElementById('confirmFirstBid');
+    const cancelBtn = document.getElementById('cancelFirstBid');
+    
+    if (confirmBtn) {
+        confirmBtn.addEventListener('click', async () => {
+            hideFirstBidModal();
+            if (pendingBidAmount !== null) {
+                // Find the bid button
+                const bidButton = document.querySelector('button[onclick="placeBid()"]');
+                if (bidButton) {
+                    bidButton.disabled = true;
+                    await submitBid(pendingBidAmount, bidButton);
+                }
+                pendingBidAmount = null;
+            }
+        });
+    }
+    
+    if (cancelBtn) {
+        cancelBtn.addEventListener('click', () => {
+            hideFirstBidModal();
+            pendingBidAmount = null;
+        });
+    }
 
     console.log('✅ Product detail page initialized with real-time polling');
 });

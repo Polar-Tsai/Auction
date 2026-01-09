@@ -262,6 +262,29 @@ class ExcelAdapter:
         
         return result
 
+    def user_has_any_bids(self, bidder_id):
+        """
+        Check if a user has made any bids.
+        Used for first-time bid confirmation feature.
+        
+        Args:
+            bidder_id: Employee ID to check
+            
+        Returns:
+            bool: True if user has any bid records, False if this would be their first bid
+        """
+        try:
+            df_bids = pd.read_csv(self.bids_path, encoding='utf-8-sig')
+            if df_bids.empty:
+                return False
+            
+            # Check if this bidder has any records
+            user_bids = df_bids[df_bids['bidder_id'].astype(str) == str(bidder_id)]
+            return not user_bids.empty
+        except Exception:
+            # If there's an error reading, assume user has no bids (safer)
+            return False
+
     def save_bid(self, product_id, employee_id, amount):
         """
         Transactional save of a bid.

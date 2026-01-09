@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: \n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2025-12-22 14:00+0800\n"
+"POT-Creation-Date: 2026-01-09 10:51+0800\n"
 "PO-Revision-Date: 2025-12-22 14:00+0800\n"
 "Last-Translator: \n"
 "Language-Team: \n"
@@ -17,195 +17,305 @@ msgstr ""
 "Content-Transfer-Encoding: 8bit\n"
 
 # Navigation and General
+#: .\templates\base.html:98 .\templates\base.html:136
 msgid "競拍網站"
 msgstr "Situs Lelang"
 
+#: .\templates\base.html:118
 msgid "歡迎"
 msgstr "Selamat datang"
 
+#: .\templates\base.html:119 .\templates\base.html:170
 msgid "拍賣清單"
 msgstr "Daftar Lelang"
 
+#: .\templates\base.html:120 .\templates\base.html:178
 msgid "下標紀錄"
 msgstr "Riwayat Penawaran"
 
-msgid "登出"
-msgstr "Keluar"
-
-msgid "員工登入"
-msgstr "Login Karyawan"
-
+#: .\templates\base.html:122
 msgid "管理員登入"
 msgstr "Login Admin"
 
+#: .\templates\base.html:124 .\templates\base.html:186
+msgid "登出"
+msgstr "Keluar"
+
+#: .\templates\base.html:126
+msgid "員工登入"
+msgstr "Login Karyawan"
+
+#: .\templates\base.html:233
+msgid "切換到 Admin"
+msgstr ""
+
+#: .\templates\base.html:247
+msgid "切換到 User"
+msgstr ""
+
 # Login Page
+#: .\templates\login.html:26 .\templates\product_detail.html:201
 msgid "工號"
 msgstr "ID Karyawan"
 
+#: .\templates\login.html:27
 msgid "請輸入工號 (例: 1305)"
 msgstr "Masukkan ID Karyawan (contoh: 1305)"
 
-# Product List Page
-msgid "進行中"
-msgstr "Sedang Berlangsung"
-
-msgid "已結標"
-msgstr "Selesai"
-
-msgid "尚未開始"
-msgstr "Belum Dimulai"
-
-msgid "目前價格"
-msgstr "Harga Saat Ini"
-
-msgid "次出價"
-msgstr "penawaran"
-
-msgid "出價"
-msgstr "Tawar"
-
-msgid "尚未開標"
-msgstr "Belum Dibuka"
-
-msgid "得標者"
-msgstr "Pemenang"
-
-msgid "無人出價"
-msgstr "Tidak ada penawaran"
-
-msgid "最高出價"
-msgstr "Penawaran Tertinggi"
-
-msgid "等待首次出價"
-msgstr "Menunggu penawaran pertama"
-
-msgid "目前沒有商品"
-msgstr "Tidak ada produk saat ini"
-
-
-msgid "時"
-msgstr "jam"
-
-msgid "分"
-msgstr "menit"
-
-msgid "秒"
-msgstr "detik"
-
-msgid "結束"
-msgstr "selesai"
-
-msgid "開始"
-msgstr "dimulai"
-
-msgid "已結束"
-msgstr "Telah selesai"
-
-msgid "即將開始"
-msgstr "Akan segera dimulai"
-
-# Product Detail Page
-msgid "拍賣品名稱"
-msgstr "Nama Produk Lelang"
-
-msgid "AI 描述"
-msgstr "Deskripsi AI"
-
-msgid "最高出價者"
-msgstr "Penawar Tertinggi"
-
-msgid "請輸入出價金額"
-msgstr "Masukkan jumlah penawaran"
-
-msgid "請先登入以出價"
-msgstr "Silakan login untuk menawar"
-
-msgid "出價歷史記錄 (最新 10 筆)"
-msgstr "Riwayat Penawaran (10 Terbaru)"
-
-msgid "出價者"
-msgstr "Penawar"
-
-msgid "出價金額"
-msgstr "Jumlah Penawaran"
-
-msgid "出價時間"
-msgstr "Waktu Penawaran"
-
-msgid "載入中..."
-msgstr "Memuat..."
-
-msgid "目前尚無出價，成為第一個出價者！"
-msgstr "Belum ada penawaran, jadilah yang pertama!"
-
-msgid "競標中"
-msgstr "Sedang Lelang"
-
-msgid "流標"
-msgstr "Tidak Terjual"
-
-# User Bids Page
-msgid "個人出價紀錄"
-msgstr "Riwayat Penawaran Pribadi"
-
-msgid "日期時間"
-msgstr "Tanggal & Waktu"
-
-msgid "商品名稱"
-msgstr "Nama Produk"
-
-msgid "您目前還沒有任何出價紀錄"
-msgstr "Anda belum memiliki riwayat penawaran"
-
-msgid "前往瀏覽商品"
-msgstr "Lihat produk"
-
-# JavaScript Messages
-msgid "請輸入金額"
-msgstr "Silakan masukkan jumlah"
-
-msgid "出價成功！目前價格"
-msgstr "Penawaran berhasil! Harga saat ini"
-
-msgid "出價失敗"
-msgstr "Penawaran gagal"
-
-msgid "網路錯誤，請稍後重試"
-msgstr "Kesalahan jaringan, silakan coba lagi nanti"
-
-msgid "⏰ 競標時間已延長"
-msgstr "⏰ Waktu lelang diperpanjang"
-
 # New translations for password and bidding features
+#: .\templates\login.html:31
 msgid "密碼"
 msgstr "Kata Sandi"
 
+#: .\templates\login.html:32
 msgid "出生月日四位數，例如：0315"
 msgstr "Tanggal lahir 4 digit, contoh: 0315"
 
+#: .\templates\login.html:33
 msgid "請輸入出生月日，格式：MMDD"
 msgstr "Masukkan tanggal lahir dengan format MMDD"
 
+#: .\templates\login.html:38
 msgid "登入"
 msgstr "Masuk"
 
-msgid "您目前以工號"
-msgstr "Anda saat ini login dengan ID"
+#: .\templates\product_detail.html:151
+msgid "競標中"
+msgstr "Sedang Lelang"
 
-msgid "登入，請確認是您本人操作。冒用他人工號將違反遊戲規定。"
-msgstr "silakan pastikan ini adalah Anda. Penyalahgunaan ID orang lain akan melanggar aturan permainan."
+#: .\templates\product_detail.html:152 .\templates\products.html:176
+msgid "即將開始"
+msgstr "Akan segera dimulai"
 
+#: .\templates\product_detail.html:153 .\templates\product_detail.html:239
+#: .\templates\product_detail.html:303 .\templates\products.html:175
+msgid "已結束"
+msgstr "Telah selesai"
+
+#: .\templates\product_detail.html:154 .\templates\product_detail.html:240
+msgid "流標"
+msgstr "Tidak Terjual"
+
+#: .\templates\product_detail.html:162
+msgid "商品描述"
+msgstr ""
+
+#: .\templates\product_detail.html:170 .\templates\products.html:81
+msgid "目前價格"
+msgstr "Harga Saat Ini"
+
+#: .\templates\product_detail.html:175 .\templates\products.html:87
+msgid "次出價"
+msgstr "penawaran"
+
+#: .\templates\product_detail.html:181
+msgid "最高出價者"
+msgstr "Penawar Tertinggi"
+
+#: .\templates\product_detail.html:201
 msgid "當前登入"
 msgstr "Login Saat Ini"
 
+#: .\templates\product_detail.html:208
 msgid "當前價格"
 msgstr "Harga Saat Ini"
 
+#: .\templates\product_detail.html:212
 msgid "下次出價"
 msgstr "Penawaran Berikutnya"
 
+#: .\templates\product_detail.html:216
+#, fuzzy
+#| msgid "出價"
+msgid "底價"
+msgstr "Tawar"
+
+#: .\templates\product_detail.html:227 .\templates\product_detail.html:229
+#: .\templates\products.html:145
+msgid "出價"
+msgstr "Tawar"
+
+#: .\templates\product_detail.html:233
 msgid "每次出價增量為底價的 1/10"
 msgstr "Setiap penawaran bertambah 1/10 dari harga dasar"
 
+#: .\templates\product_detail.html:238 .\templates\products.html:40
+msgid "尚未開始"
+msgstr "Belum Dimulai"
+
+#: .\templates\product_detail.html:241
 msgid "無法出價"
 msgstr "Tidak dapat menawar"
+
+#: .\templates\product_detail.html:246
+msgid "請先登入以出價"
+msgstr "Silakan login untuk menawar"
+
+#: .\templates\product_detail.html:255
+msgid "出價歷史記錄 (最新 10 筆)"
+msgstr "Riwayat Penawaran (10 Terbaru)"
+
+#: .\templates\product_detail.html:260
+msgid "出價者"
+msgstr "Penawar"
+
+#: .\templates\product_detail.html:261
+msgid "出價金額"
+msgstr "Jumlah Penawaran"
+
+#: .\templates\product_detail.html:262
+msgid "出價時間"
+msgstr "Waktu Penawaran"
+
+#: .\templates\product_detail.html:267
+msgid "載入中..."
+msgstr "Memuat..."
+
+#: .\templates\product_detail.html:279
+msgid "首次出價確認"
+msgstr "Konfirmasi Penawaran Pertama"
+
+#: .\templates\product_detail.html:282
+msgid ""
+"這是您第一次參加競標，點擊確認即表示您同意參與競標活動。一旦確認後，您的出價"
+"將會被記錄。"
+msgstr "Ini adalah penawaran pertama Anda. Dengan mengklik konfirmasi, Anda setuju untuk berpartisipasi dalam lelang. Setelah dikonfirmasi, penawaran Anda akan dicatat."
+
+#: .\templates\product_detail.html:286
+msgid "取消"
+msgstr "Batal"
+
+#: .\templates\product_detail.html:289
+msgid "我確認參加"
+msgstr "Saya Konfirmasi"
+
+#: .\templates\product_detail.html:298 .\templates\products.html:170
+msgid "時"
+msgstr "jam"
+
+#: .\templates\product_detail.html:299 .\templates\products.html:171
+msgid "分"
+msgstr "menit"
+
+#: .\templates\product_detail.html:300 .\templates\products.html:172
+msgid "秒"
+msgstr "detik"
+
+#: .\templates\product_detail.html:301 .\templates\products.html:173
+msgid "結束"
+msgstr "selesai"
+
+#: .\templates\product_detail.html:302 .\templates\products.html:174
+msgid "開始"
+msgstr "dimulai"
+
+# JavaScript Messages
+#: .\templates\product_detail.html:304
+msgid "請輸入金額"
+msgstr "Silakan masukkan jumlah"
+
+#: .\templates\product_detail.html:305
+msgid "出價成功！目前價格"
+msgstr "Penawaran berhasil! Harga saat ini"
+
+#: .\templates\product_detail.html:306
+msgid "出價失敗"
+msgstr "Penawaran gagal"
+
+#: .\templates\product_detail.html:307
+msgid "網路錯誤，請稍後重試"
+msgstr "Kesalahan jaringan, silakan coba lagi nanti"
+
+#: .\templates\product_detail.html:308
+msgid "目前尚無出價，成為第一個出價者！"
+msgstr "Belum ada penawaran, jadilah yang pertama!"
+
+#: .\templates\product_detail.html:309
+msgid "⏰ 競標時間已延長"
+msgstr "⏰ Waktu lelang diperpanjang"
+
+#: .\templates\products.html:24
+msgid "您目前以工號"
+msgstr "Anda saat ini login dengan ID"
+
+#: .\templates\products.html:24
+msgid "登入，請確認是您本人操作。冒用他人工號將違反遊戲規定。"
+msgstr ""
+"silakan pastikan ini adalah Anda. Penyalahgunaan ID orang lain akan "
+"melanggar aturan permainan."
+
+# Product List Page
+#: .\templates\products.html:34
+msgid "進行中"
+msgstr "Sedang Berlangsung"
+
+#: .\templates\products.html:37 .\templates\products.html:153
+msgid "已結標"
+msgstr "Selesai"
+
+#: .\templates\products.html:109 .\templates\products.html:257
+msgid "得標者"
+msgstr "Pemenang"
+
+#: .\templates\products.html:116 .\templates\products.html:258
+msgid "無人出價"
+msgstr "Tidak ada penawaran"
+
+#: .\templates\products.html:126
+msgid "最高出價"
+msgstr "Penawaran Tertinggi"
+
+#: .\templates\products.html:133
+msgid "等待首次出價"
+msgstr "Menunggu penawaran pertama"
+
+#: .\templates\products.html:149
+msgid "尚未開標"
+msgstr "Belum Dibuka"
+
+#: .\templates\products.html:161
+msgid "目前沒有商品"
+msgstr "Tidak ada produk saat ini"
+
+# User Bids Page
+#: .\templates\user_bids.html:5
+msgid "個人出價紀錄"
+msgstr "Riwayat Penawaran Pribadi"
+
+#: .\templates\user_bids.html:6
+msgid "表示你得標了"
+msgstr ""
+
+#: .\templates\user_bids.html:34
+msgid "筆"
+msgstr ""
+
+#: .\templates\user_bids.html:38
+#, fuzzy
+#| msgid "得標者"
+msgid "得標中"
+msgstr "Pemenang"
+
+#: .\templates\user_bids.html:66
+msgid "您目前還沒有任何出價紀錄"
+msgstr "Anda belum memiliki riwayat penawaran"
+
+#: .\templates\user_bids.html:67
+msgid "前往瀏覽商品"
+msgstr "Lihat produk"
+
+# Product Detail Page
+#~ msgid "拍賣品名稱"
+#~ msgstr "Nama Produk Lelang"
+
+#~ msgid "AI 描述"
+#~ msgstr "Deskripsi AI"
+
+#~ msgid "請輸入出價金額"
+#~ msgstr "Masukkan jumlah penawaran"
+
+#~ msgid "日期時間"
+#~ msgstr "Tanggal & Waktu"
+
+#~ msgid "商品名稱"
+#~ msgstr "Nama Produk"

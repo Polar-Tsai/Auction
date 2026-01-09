@@ -25,6 +25,7 @@ urlpatterns = [
     path('admin/bids/', admin_views.admin_bids_list, name='admin_bids_list'),
 
     # API endpoints
+    path('api/check-first-bid/', views.check_first_bid, name='check_first_bid'),
     path('api/products/poll/', views.products_poll, name='products_poll'),  # 商品列表輪詢
     path('api/products/<int:product_id>/poll/', views.product_poll, name='product_poll'),
     path('api/bids/', views.place_bid, name='place_bid'),
