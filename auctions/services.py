@@ -141,11 +141,17 @@ class AuthService:
         if not emp:
             raise BusinessException("帳號或工號錯誤", code='INVALID_CREDENTIALS')
         
-        # Validate password (which is the employeeId)
-        stored_employeeId = str(emp.get('employeeId', '')).strip()
-        input_password = str(password).strip()
+        # Verify password (employeeId)
+        stored_id = str(emp.get('employeeId', '')).strip()
+        input_pass = str(password).strip()
         
-        if not stored_employeeId or stored_employeeId != input_password:
+        # Robustness: handle leading zeros by comparing as integers if both are numeric
+        if stored_id.isdigit() and input_pass.isdigit():
+            is_match = int(stored_id) == int(input_pass)
+        else:
+            is_match = stored_id == input_pass
+            
+        if not stored_id or not is_match:
             raise BusinessException("帳號或工號錯誤", code='INVALID_CREDENTIALS')
         
         return emp

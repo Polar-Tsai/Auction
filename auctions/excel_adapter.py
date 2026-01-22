@@ -185,11 +185,17 @@ class ExcelAdapter:
 
     def get_employee_by_email(self, email):
         try:
-            df = pd.read_csv(self.employees_path, dtype=str, encoding='utf-8-sig')
+            # Try utf-8-sig first, fallback to cp950 (Traditional Chinese)
+            try:
+                df = pd.read_csv(self.employees_path, dtype=str, encoding='utf-8-sig')
+            except UnicodeDecodeError:
+                df = pd.read_csv(self.employees_path, dtype=str, encoding='cp950')
+            
             # Robustness: strip whitespaces from column names
             df.columns = [c.strip() for c in df.columns]
             
             if 'email' not in df.columns:
+                logger.error(f"Column 'email' not found in {self.employees_path}. Available: {df.columns.tolist()}")
                 return None
                 
             # Robustness: strip whitespaces from data and case-insensitive comparison
@@ -204,7 +210,11 @@ class ExcelAdapter:
             result = res.iloc[0].to_dict()
             result.pop('email_clean', None)
             return result
-        except Exception:
+        except FileNotFoundError:
+            logger.error(f"Employees file not found at {self.employees_path}")
+            return None
+        except Exception as e:
+            logger.error(f"Error reading employees CSV: {str(e)}")
             return None
 
     def get_bids_for_product(self, product_id, limit=10):
