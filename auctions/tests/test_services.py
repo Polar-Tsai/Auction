@@ -66,14 +66,13 @@ class AuthServiceTests(SimpleTestCase):
         pass
 
     def setup_data(self, d):
-        # setup employees with email
+        # setup employees with email, mixed case headers and data
         df_emp = pd.DataFrame([{
-            'id':1,
-            'employeeId':'0001',
-            'name':'TestUser',
-            'department':'IT',
-            'email':'test@kingsteel.com',
-            'pwd':'0315'
+            ' id ':'1',
+            ' employeeId ':' 0001 ',
+            ' name ':' TestUser ',
+            ' email ':' Test@KingSteel.com ',
+            ' admin ':' TRUE '
         }])
         df_emp.to_csv(os.path.join(d,'employees.csv'), index=False)
         # empty products and bids
@@ -117,3 +116,30 @@ class AuthServiceTests(SimpleTestCase):
             with self.assertRaises(BusinessException) as cm:
                 service.login('wrong@kingsteel.com', '0001')
             self.assertEqual(cm.exception.code, 'INVALID_CREDENTIALS')
+
+    def test_login_success_robust(self):
+        with tempfile.TemporaryDirectory() as d:
+            self.setup_data(d)
+            adapter = ExcelAdapter(d)
+            from auctions.services import AuthService
+            service = AuthService(adapter)
+            
+            # Action: login with lowercase email (even if CSV has proper case) and prefix logic-like input
+            # The view constructs the email, so we test service with full email
+            emp = service.login('test@kingsteel.com', '0001')
+            
+            # Assert
+            self.assertIsNotNone(emp)
+            self.assertEqual(emp['employeeId'], '0001')
+
+    def test_login_case_and_whitespace_robust(self):
+        with tempfile.TemporaryDirectory() as d:
+            self.setup_data(d)
+            adapter = ExcelAdapter(d)
+            from auctions.services import AuthService
+            service = AuthService(adapter)
+            
+            # Test case insensitivity and whitespace handling
+            emp = service.login('  TEST@KINGSTEEL.COM  ', '  0001  ')
+            self.assertIsNotNone(emp)
+            self.assertEqual(emp['employeeId'], '0001')

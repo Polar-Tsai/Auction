@@ -186,10 +186,24 @@ class ExcelAdapter:
     def get_employee_by_email(self, email):
         try:
             df = pd.read_csv(self.employees_path, dtype=str, encoding='utf-8-sig')
-            res = df[df['email'] == str(email)]
+            # Robustness: strip whitespaces from column names
+            df.columns = [c.strip() for c in df.columns]
+            
+            if 'email' not in df.columns:
+                return None
+                
+            # Robustness: strip whitespaces from data and case-insensitive comparison
+            target_email = str(email).strip().lower()
+            df['email_clean'] = df['email'].str.strip().str.lower()
+            
+            res = df[df['email_clean'] == target_email]
             if res.empty:
                 return None
-            return res.iloc[0].to_dict()
+            
+            # Return original data (as dict) without the 'email_clean' temp column
+            result = res.iloc[0].to_dict()
+            result.pop('email_clean', None)
+            return result
         except Exception:
             return None
 

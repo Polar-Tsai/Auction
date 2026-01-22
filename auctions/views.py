@@ -302,7 +302,7 @@ def login_view(request):
                 'employeeId': emp.get('employeeId'), 
                 'name': emp.get('name'), 
                 'department': emp.get('department'),
-                'is_potential_admin': emp.get('admin', 'False') == 'True'  # Parse admin field
+                'is_potential_admin': str(emp.get('admin', 'False')).strip().lower() == 'true'
             }
             return redirect('auctions:products_list')
         except BusinessException as e:
