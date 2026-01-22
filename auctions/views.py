@@ -285,11 +285,17 @@ def products_poll(request):
 
 def login_view(request):
     if request.method == 'POST':
-        employee_id = request.POST.get('employeeId')
-        password = request.POST.get('password')  # Get password from form
+        email_prefix = request.POST.get('account')  # Changed from employeeId to account
+        password = request.POST.get('password')    # This will be the employeeId
         try:
-            # Pass password to auth_service
-            emp = auth_service.login(employee_id, password)
+            if not email_prefix:
+                raise BusinessException("請填寫帳號", code='INVALID_PAYLOAD')
+            
+            # Construct full email
+            full_email = f"{email_prefix.strip().lower()}@kingsteel.com"
+            
+            # Pass full_email and password to auth_service
+            emp = auth_service.login(full_email, password)
             # Session management remains in View
             request.session['employee'] = {
                 'id': emp.get('id'),

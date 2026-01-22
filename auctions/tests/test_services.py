@@ -60,3 +60,60 @@ class BidServiceTests(SimpleTestCase):
             with self.assertRaises(BusinessException) as cm:
                 service.place_bid(1, '0001', 400)
             self.assertEqual(cm.exception.code, 'AUCTION_NOT_ACTIVE')
+
+class AuthServiceTests(SimpleTestCase):
+    def setUp(self):
+        pass
+
+    def setup_data(self, d):
+        # setup employees with email
+        df_emp = pd.DataFrame([{
+            'id':1,
+            'employeeId':'0001',
+            'name':'TestUser',
+            'department':'IT',
+            'email':'test@kingsteel.com',
+            'pwd':'0315'
+        }])
+        df_emp.to_csv(os.path.join(d,'employees.csv'), index=False)
+        # empty products and bids
+        pd.DataFrame(columns=['id','name','start_price','current_price','status','start_time','end_time','last_bid_time','brand','description','bids_count','highest_bidder_id']).to_csv(os.path.join(d,'products.csv'), index=False)
+        pd.DataFrame(columns=['id','product_id','bidder_id','amount','bid_timestamp']).to_csv(os.path.join(d,'bids.csv'), index=False)
+
+    def test_login_success(self):
+        with tempfile.TemporaryDirectory() as d:
+            self.setup_data(d)
+            adapter = ExcelAdapter(d)
+            from auctions.services import AuthService
+            service = AuthService(adapter)
+            
+            # Action: login with email and employeeId as password
+            emp = service.login('test@kingsteel.com', '0001')
+            
+            # Assert
+            self.assertIsNotNone(emp)
+            self.assertEqual(emp['employeeId'], '0001')
+
+    def test_login_failed_wrong_password(self):
+        with tempfile.TemporaryDirectory() as d:
+            self.setup_data(d)
+            adapter = ExcelAdapter(d)
+            from auctions.services import AuthService
+            service = AuthService(adapter)
+            
+            # Action & Assert: wrong employeeId as password
+            with self.assertRaises(BusinessException) as cm:
+                service.login('test@kingsteel.com', '9999')
+            self.assertEqual(cm.exception.code, 'INVALID_CREDENTIALS')
+
+    def test_login_failed_wrong_email(self):
+        with tempfile.TemporaryDirectory() as d:
+            self.setup_data(d)
+            adapter = ExcelAdapter(d)
+            from auctions.services import AuthService
+            service = AuthService(adapter)
+            
+            # Action & Assert: wrong email
+            with self.assertRaises(BusinessException) as cm:
+                service.login('wrong@kingsteel.com', '0001')
+            self.assertEqual(cm.exception.code, 'INVALID_CREDENTIALS')

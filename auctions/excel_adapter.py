@@ -183,6 +183,16 @@ class ExcelAdapter:
         except Exception:
             return None
 
+    def get_employee_by_email(self, email):
+        try:
+            df = pd.read_csv(self.employees_path, dtype=str, encoding='utf-8-sig')
+            res = df[df['email'] == str(email)]
+            if res.empty:
+                return None
+            return res.iloc[0].to_dict()
+        except Exception:
+            return None
+
     def get_bids_for_product(self, product_id, limit=10):
         df = pd.read_csv(self.bids_path, encoding='utf-8-sig')
         res = df[df['product_id'] == int(product_id)].sort_values('bid_timestamp', ascending=False)

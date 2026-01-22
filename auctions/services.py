@@ -133,22 +133,20 @@ class AuthService:
     def __init__(self, adapter):
         self.adapter = adapter
 
-    def login(self, employee_id, password=None):
+    def login(self, email, password):
         """
-        Authenticate user with employee_id and password (MMDD format).
-        Password is optional for backward compatibility during migration.
+        Authenticate user with email and password (which is the employeeId).
         """
-        emp = self.adapter.get_employee_by_employeeId(employee_id)
+        emp = self.adapter.get_employee_by_email(email)
         if not emp:
-            raise BusinessException("工號或密碼錯誤", code='INVALID_CREDENTIALS')
+            raise BusinessException("帳號或工號錯誤", code='INVALID_CREDENTIALS')
         
-        # Validate password if provided
-        if password is not None:
-            stored_pwd = str(emp.get('pwd', '')).strip()
-            input_pwd = str(password).strip()
-            
-            if not stored_pwd or stored_pwd != input_pwd:
-                raise BusinessException("工號或密碼錯誤", code='INVALID_CREDENTIALS')
+        # Validate password (which is the employeeId)
+        stored_employeeId = str(emp.get('employeeId', '')).strip()
+        input_password = str(password).strip()
+        
+        if not stored_employeeId or stored_employeeId != input_password:
+            raise BusinessException("帳號或工號錯誤", code='INVALID_CREDENTIALS')
         
         return emp
 
