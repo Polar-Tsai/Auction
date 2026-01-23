@@ -167,14 +167,22 @@ class ProductListPoller {
     updateStatus(card, newStatus, productData) {
         console.log(`📦 Product ${productData.id} status changed: ${card.dataset.status} → ${newStatus}`);
 
-        // Fade out from current tab
+        // Update the action button based on the new status
+        this.updateActionButton(card, newStatus, productData.id);
+
+        // Update the info area (winner/highest bidder)
+        this.updateWinner(card, productData.winner_name, newStatus, productData.highest_bidder_id);
+
+        // Fade out from current tab if it should no longer be visible
         card.classList.add('card-fade-out');
 
         setTimeout(() => {
             card.dataset.status = newStatus;
 
             // Check if card should be visible in current tab
-            const currentTab = document.querySelector('.tab-btn.text-blue-600')?.id.replace('tab-', '');
+            const activeTabBtn = document.querySelector('.tab-btn.text-blue-600') ||
+                document.querySelector('.tab-btn[class*="text-blue-600"]');
+            const currentTab = activeTabBtn?.id.replace('tab-', '');
             let shouldBeVisible = false;
 
             if (currentTab === 'Closed') {
@@ -200,55 +208,118 @@ class ProductListPoller {
         }, 300);
     }
 
-    updateWinner(card, winnerName) {
+    updateActionButton(card, status, productId) {
+        const buttonContainer = card.querySelector('.text-center:last-child');
+        if (!buttonContainer) return;
+
+        let buttonHtml = '';
+        if (status === 'Open') {
+            const bidLabel = i18nStrings.bid || '出價';
+            // Use window.location.origin to get base URL as we can't easily use reverse in JS
+            // But we know the pattern is /{{lang}}/products/{{id}}/
+            const langPrefix = window.location.pathname.split('/')[1] || 'zh-hant';
+            const detailUrl = `/${langPrefix}/products/${productId}/`;
+
+            buttonHtml = `
+                <a href="${detailUrl}" class="block w-full py-2.5 font-bold rounded-full shadow-md transition text-sm" style="background-color: #1E40AF; color: white;" onmouseover="this.style.backgroundColor='#1a3a9e'" onmouseout="this.style.backgroundColor='#1E40AF'">
+                    ${bidLabel}
+                </a>
+            `;
+        } else if (status === 'Upcoming') {
+            const notStartedLabel = i18nStrings.notStarted || '尚未開標';
+            buttonHtml = `
+                <button disabled class="block w-full py-2.5 bg-white font-bold rounded-full cursor-not-allowed text-sm" style="border: 2px solid #9492a4; color: #9492a4;">
+                    ${notStartedLabel}
+                </button>
+            `;
+        } else {
+            const endedLabel = i18nStrings.ended || '已結標';
+            buttonHtml = `
+                <button disabled class="block w-full py-2.5 font-bold rounded-full cursor-not-allowed text-sm" style="background-color: #9492a4; color: white;">
+                    ${endedLabel}
+                </button>
+            `;
+        }
+
+        buttonContainer.innerHTML = buttonHtml;
+    }
+
+    updateWinner(card, winnerName, status = null, highestBidderId = null) {
         const winnerContainer = card.querySelector('.winner-info');
         if (!winnerContainer) return;
 
+        const currentStatus = status || card.dataset.status;
         const currentWinner = card.dataset.winner;
-        if (currentWinner === (winnerName || '')) return; // No change
 
-        // Update winner display
-        if (winnerName) {
-            // Get translated text
-            const winnerLabel = i18nStrings.winner || '得標者';
-            winnerContainer.innerHTML = `
-        <div class="text-sm text-green-700 mb-3 font-semibold flex items-center">
-          <span class="mr-1">🏆</span>
-          <span>${winnerLabel}: ${winnerName}</span>
-        </div>
-      `;
-        } else {
-            const noBidsLabel = i18nStrings.noBids || '無人出價';
-            winnerContainer.innerHTML = `
-        <div class="text-sm text-gray-500 mb-3 flex items-center">
-          <span class="mr-1">ℹ️</span>
-          <span>${noBidsLabel}</span>
-        </div>
-      `;
+        // Only skip if nothing changed and we aren't forcing a status update
+        if (!status && currentWinner === (winnerName || '')) return;
+
+        let html = '';
+        if (['Closed', 'Ended', 'Unsold'].includes(currentStatus)) {
+            if (winnerName) {
+                const winnerLabel = i18nStrings.winner || '得標者';
+                html = `
+                    <div class="text-sm text-green-700 font-semibold flex items-center">
+                      <svg class="w-4 h-4 mr-1.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 3v4M3 5h4M6 17v4m-2-2h4m5-16l2.286 6.857L21 12l-5.714 2.143L13 21l-2.286-6.857L5 12l5.714-2.143L13 3z"/></svg>
+                      <span>${winnerLabel}: ${winnerName}</span>
+                    </div>
+                `;
+            } else {
+                const noBidsLabel = i18nStrings.noBids || '無人出價';
+                html = `
+                    <div class="text-sm text-gray-500 flex items-center">
+                      <svg class="w-4 h-4 mr-1.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                      <span>${noBidsLabel}</span>
+                    </div>
+                `;
+            }
+        } else if (currentStatus === 'Open') {
+            if (highestBidderId) {
+                const highestBidLabel = i18nStrings.highestBid || '最高出價';
+                html = `
+                    <div class="text-sm font-medium flex items-center highest-bidder-display" style="color: #1E40AF;">
+                      <svg class="w-4 h-4 mr-1.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"/></svg>
+                      <span>${highestBidLabel}: ${highestBidderId}</span>
+                    </div>
+                `;
+            } else {
+                const waitingBidLabel = i18nStrings.waitingBid || '等待首次出價';
+                html = `
+                    <div class="text-sm text-gray-400 flex items-center">
+                      <svg class="w-4 h-4 mr-1.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                      <span>${waitingBidLabel}</span>
+                    </div>
+                `;
+            }
         }
 
+        winnerContainer.innerHTML = html;
         card.dataset.winner = winnerName || '';
     }
 
     updateHighestBidder(card, bidderId) {
+        // This is handled by updateWinner now during status changes, 
+        // but we still update the ID if it changes while Open.
         const bidderDisplay = card.querySelector('.highest-bidder-display');
-        if (!bidderDisplay) return;
+        if (!bidderDisplay) {
+            // If it's Open but display is missing (transitioned recently), force a refresh
+            if (card.dataset.status === 'Open') {
+                this.updateWinner(card, null, 'Open', bidderId);
+            }
+            return;
+        }
 
         const bidderSpan = bidderDisplay.querySelector('span:last-child');
         if (!bidderSpan) return;
 
-        // Get the current bidder ID from the display
         const currentText = bidderSpan.textContent;
         const currentBidderId = currentText.split(': ')[1];
 
-        // Only update if changed
         if (currentBidderId === bidderId) return;
 
-        // Update the bidder ID
         const highestBidLabel = currentText.split(': ')[0];
         bidderSpan.textContent = `${highestBidLabel}: ${bidderId || '---'}`;
 
-        // Add animation
         bidderDisplay.classList.add('price-updated');
         setTimeout(() => {
             bidderDisplay.classList.remove('price-updated');
