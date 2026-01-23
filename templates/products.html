@@ -50,8 +50,8 @@
          data-status="{{ p.status }}"
          data-price="{{ p.current_price }}"
          data-bids-count="{{ p.bids_count|default:0 }}"
-         data-end="{{ p.end_time }}" 
-         data-start="{{ p.start_time }}"
+         data-end="{{ p.end_time|date:'c' }}" 
+         data-start="{{ p.start_time|date:'c' }}"
          data-winner="{{ p.winner_name|default:'' }}">
        
        <!-- Image Section (Sky/Hill placeholder aesthetics if no image) -->
@@ -227,7 +227,7 @@
 
   function updateTimers() {
     const cards = document.querySelectorAll('.product-card');
-    const now = new Date().getTime();
+    const now = Date.now();
 
     cards.forEach(card => {
       const status = card.getAttribute('data-status');

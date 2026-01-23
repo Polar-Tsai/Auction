@@ -7,6 +7,7 @@ from django.http import JsonResponse, HttpResponseBadRequest
 from django.views.decorators.csrf import csrf_exempt
 from django.conf import settings
 
+from django.utils import timezone
 from .excel_adapter import ExcelAdapter
 from .services import BidService, AuthService
 from common.exceptions import BusinessException, SystemException
@@ -159,11 +160,18 @@ def product_poll(request, product_id):
             return JsonResponse({'success': False, 'message': 'PRODUCT_NOT_FOUND'}, status=404)
         
         # Convert datetime objects to strings for JSON serialization
-        from datetime import datetime
+        # Ensure they are timezone-aware so isoformat() includes the offset
         if isinstance(product.get('end_time'), datetime):
-            product['end_time'] = product['end_time'].strftime("%Y-%m-%d %H:%M:%S")
+            dt = product['end_time']
+            if timezone.is_naive(dt):
+                dt = timezone.make_aware(dt)
+            product['end_time'] = dt.isoformat()
+            
         if isinstance(product.get('start_time'), datetime):
-            product['start_time'] = product['start_time'].strftime("%Y-%m-%d %H:%M:%S")
+            dt = product['start_time']
+            if timezone.is_naive(dt):
+                dt = timezone.make_aware(dt)
+            product['start_time'] = dt.isoformat()
         
         bids = adapter.get_bids_for_product(product_id, limit=10)
         
@@ -248,16 +256,20 @@ def products_poll(request):
                 product['highest_bidder_id'] = None
                 product['winner_name'] = None
         
-        # Ensure end_time format is consistent (YYYY-MM-DD HH:MM:SS)
+        # Ensure end_time format is consistent (ISO 8601 with timezone offset)
         for product in products:
             end_time = product.get('end_time')
             if end_time:
                 if isinstance(end_time, datetime):
-                    product['end_time'] = end_time.strftime("%Y-%m-%d %H:%M:%S")
+                    dt = end_time
+                    if timezone.is_naive(dt):
+                        dt = timezone.make_aware(dt)
+                    product['end_time'] = dt.isoformat()
                 elif isinstance(end_time, str):
-                    # Add :00 seconds if missing (format is YYYY-MM-DD HH:MM)
-                    if len(end_time.strip()) == 16:
-                        product['end_time'] = end_time.strip() + ':00'
+                    # If it's a simple string without T or offset, it's likely naive local time
+                    if 'T' not in end_time and ' ' in end_time:
+                        end_time = end_time.replace(' ', 'T')
+                    product['end_time'] = end_time
         
         # Calculate status counts
         status_counts = {'Open': 0, 'Closed': 0, 'Upcoming': 0}

@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>Anti-Sniper Test</title>
+</head>
+<body>
+    <h1>Anti-Sniper 前端測試</h1>
+    <div id="countdown"></div>
+    <div id="log" style="font-family: monospace; white-space: pre;"></div>
+
+    <script>
+        // Test the exact logic from product_detail.html
+        let endTimeStr = "2026-01-06 14:50:00";  // 設置一個未來時間
+        
+        function log(msg) {
+            const logDiv = document.getElementById('log');
+            const timestamp = new Date().toLocaleTimeString();
+            logDiv.textContent += `[${timestamp}] ${msg}\n`;
+            console.log(msg);
+        }
+        
+        function updateCountdown() {
+            const el = document.getElementById('countdown');
+            if (!el || !endTimeStr) return;
+            
+            const now = new Date().getTime();
+            const end = new Date(endTimeStr.replace(/-/g, "/")).getTime();
+            const dist = end - now;
+            
+            if (dist < 0) {
+                el.innerText = '已結束';
+                return;
+            }
+            
+            const h = Math.floor(dist / (1000 * 60 * 60));
+            const m = Math.floor((dist % (1000 * 60 * 60)) / (1000 * 60));
+            const s = Math.floor((dist % (1000 * 60)) / 1000);
+            
+            el.innerText = `${h}時${m}分${s}秒後結束`;
+        }
+        
+        // Simulate poll data with new end_time
+        function simulateTimeExtension() {
+            const mockEndTime = "2026-01-06 14:51:00";  // 延長1分鐘
+            
+            log('Simulating poll data...');
+            log('Mock end_time from API: ' + mockEndTime);
+            
+            // This is the logic from product_detail.html
+            let newEndTime = String(mockEndTime).replace('T', ' ').split('.')[0];
+            log('After processing: ' + newEndTime);
+            
+            // Pad with :00 if no seconds
+            if (newEndTime.length === 16) {
+                newEndTime += ':00';
+                log('After padding: ' + newEndTime);
+            }
+            
+            if (newEndTime !== endTimeStr) {
+                log('⏰ End time changed from ' + endTimeStr + ' to ' + newEndTime);
+                endTimeStr = newEndTime;
+            } else {
+                log('No change in end_time');
+            }
+        }
+        
+        // Start countdown
+        setInterval(updateCountdown, 1000);
+        updateCountdown();
+        
+        // Test extension after 3 seconds
+        setTimeout(() => {
+            log('\n=== Testing time extension ===');
+            simulateTimeExtension();
+        }, 3000);
+        
+        log('Test page loaded');
+        log('Initial endTimeStr: ' + endTimeStr);
+    </script>
+</body>
+</html>
