@@ -7,6 +7,7 @@ from django.http import JsonResponse, HttpResponseBadRequest
 from django.views.decorators.csrf import csrf_exempt
 from django.conf import settings
 
+from datetime import datetime
 from django.utils import timezone
 from .excel_adapter import ExcelAdapter
 from .services import BidService, AuthService
