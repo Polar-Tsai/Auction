@@ -191,7 +191,10 @@
     starting: "{% trans '即將開始' %}"
   };
 
+  window.currentTab = 'Open'; // Default tab
+
   function filterProducts(status) {
+    window.currentTab = status;
     // Update Tabs
     document.querySelectorAll('.tab-btn').forEach(btn => {
       btn.classList.remove('font-bold');
@@ -224,6 +227,11 @@
       if(show) visibleCount++;
     });
   }
+
+  // Global helper for polling.js to refresh visibility
+  window.refreshFilters = function() {
+    filterProducts(window.currentTab);
+  };
 
   function updateTimers() {
     const cards = document.querySelectorAll('.product-card');

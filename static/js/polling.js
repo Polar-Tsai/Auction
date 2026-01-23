@@ -173,39 +173,17 @@ class ProductListPoller {
         // Update the info area (winner/highest bidder)
         this.updateWinner(card, productData.winner_name, newStatus, productData.highest_bidder_id);
 
-        // Fade out from current tab if it should no longer be visible
-        card.classList.add('card-fade-out');
+        // Update card's data-status attribute IMMEDIATELY
+        card.dataset.status = newStatus;
+        card.setAttribute('data-status', newStatus);
 
-        setTimeout(() => {
-            card.dataset.status = newStatus;
-
-            // Check if card should be visible in current tab
-            const activeTabBtn = document.querySelector('.tab-btn.text-blue-600') ||
-                document.querySelector('.tab-btn[class*="text-blue-600"]');
-            const currentTab = activeTabBtn?.id.replace('tab-', '');
-            let shouldBeVisible = false;
-
-            if (currentTab === 'Closed') {
-                shouldBeVisible = ['Closed', 'Ended', 'Unsold'].includes(newStatus);
-            } else {
-                shouldBeVisible = (newStatus === currentTab);
-            }
-
-            if (shouldBeVisible) {
-                // Fade in
-                card.classList.remove('card-fade-out');
-                card.classList.add('card-fade-in');
-                card.style.display = 'block';
-
-                setTimeout(() => {
-                    card.classList.remove('card-fade-in');
-                }, 300);
-            } else {
-                // Hide card
-                card.style.display = 'none';
-                card.classList.remove('card-fade-out');
-            }
-        }, 300);
+        // If on products list page, use the global refresh function to handle visibility
+        if (typeof window.refreshFilters === 'function') {
+            window.refreshFilters();
+        } else {
+            // Fallback for pages without refreshFilters
+            card.style.display = 'block';
+        }
     }
 
     updateActionButton(card, status, productId) {
