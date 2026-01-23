@@ -82,9 +82,17 @@ class ProductListPoller {
     }
 
     updateProducts(products) {
+        let needsRefresh = false;
+        let missingCards = false;
+
         products.forEach(newData => {
             const card = document.querySelector(`[data-product-id="${newData.id}"]`);
-            if (!card) return;
+
+            // Detection: If a product exists in API but not in DOM, we need a full reload
+            if (!card) {
+                missingCards = true;
+                return;
+            }
 
             // Check and update price
             const oldPrice = parseInt(card.dataset.price);
@@ -98,10 +106,16 @@ class ProductListPoller {
                 this.updateBidsCount(card, newData.bids_count);
             }
 
-            // Check and update status
-            const oldStatus = card.dataset.status;
-            if (newData.status !== oldStatus) {
+            // Check and update status - BE AGGRESSIVE
+            // Even if status matches, check if the button is actually the right one
+            const currentStatus = card.dataset.status;
+            const hasCorrectButton = (newData.status === 'Open' && card.querySelector('a')) ||
+                (newData.status !== 'Open' && card.querySelector('button'));
+
+            if (newData.status !== currentStatus || !hasCorrectButton) {
+                console.log(`🔄 Syncing UI state for product ${newData.id} (${newData.status})`);
                 this.updateStatus(card, newData.status, newData);
+                needsRefresh = true;
             }
 
             // Update highest bidder for open items
@@ -114,7 +128,7 @@ class ProductListPoller {
                 this.updateWinner(card, newData.winner_name);
             }
 
-            // Check and update end_time (for anti-sniper time extension)
+            // Check and update end_time
             const oldEndTime = card.dataset.end;
             if (newData.end_time && newData.end_time !== oldEndTime) {
                 this.updateEndTime(card, newData.end_time);
@@ -129,6 +143,17 @@ class ProductListPoller {
                 card.dataset.end = newData.end_time;
             }
         });
+
+        // Trigger global filter refresh if any status changed
+        if (needsRefresh && typeof window.refreshFilters === 'function') {
+            window.refreshFilters();
+        }
+
+        // If cards are missing or counts mismatch significantly, reload
+        if (missingCards) {
+            console.warn('🚩 Missing cards detected in DOM. Reloading page...');
+            setTimeout(() => window.location.reload(), 1000);
+        }
     }
 
     updatePrice(card, newPrice) {
