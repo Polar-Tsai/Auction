@@ -46,13 +46,12 @@ class ExcelAdapter:
         標準化 ID：將各種格式的 ID（如 1244, 1244.0, "1244.0"）統一轉換為整數字串（如 "1244"）。
         這解決了 CSV 資料中 ID 格式不一致的問題。
         """
-        if pd.isna(value) or value == '':
+        if pd.isna(value) or str(value).strip() == '':
             return ''
         try:
-            # 嘗試轉換為浮點數再轉為整數，最後轉為字串以去除小數點
+            # 處理可能帶有 .0 的字串或數值
             return str(int(float(value)))
         except (ValueError, TypeError):
-            # 如果轉換失敗，直接返回去除前後空白的字串
             return str(value).strip()
 
     def _ensure_aware(self, val):
@@ -202,17 +201,39 @@ class ExcelAdapter:
             return []
 
     def get_employee_by_employeeId(self, employeeId):
+        """
+        極致魯棒的員工查詢：支援多種編碼、自動修剪欄位空白、標準化 ID 比較。
+        """
         try:
-            df = pd.read_csv(self.employees_path, dtype=str, encoding='utf-8-sig')
-            # 使用標準化後的 ID 進行比較
-            target_id = self._normalize_id(employeeId)
+            # 嘗試不同編碼讀取
+            df = None
+            for enc in ['utf-8-sig', 'utf-8', 'cp950']:
+                try:
+                    df = pd.read_csv(self.employees_path, dtype=str, encoding=enc)
+                    break
+                except UnicodeDecodeError:
+                    continue
             
-            # 對 CSV 中的每一列也進行標準化比較
+            if df is None:
+                return None
+
+            # 清理欄位名稱（去除不可見字元與空白）
+            df.columns = [str(c).strip() for c in df.columns]
+            
+            target_id = self._normalize_id(employeeId)
+            if not target_id:
+                return None
+
+            # 遍歷尋找，同樣對 CSV 內的 ID 進行標準化
             for _, row in df.iterrows():
-                if self._normalize_id(row['employeeId']) == target_id:
+                # 確保取到的欄位值是字串且標準化
+                row_emp_id = self._normalize_id(row.get('employeeId', ''))
+                if row_emp_id == target_id:
                     return row.to_dict()
+            
             return None
-        except Exception:
+        except Exception as e:
+            logger.error(f"Error in lookup for {employeeId}: {str(e)}")
             return None
 
     def get_employee_by_email(self, email):
