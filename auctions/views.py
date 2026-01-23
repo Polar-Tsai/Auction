@@ -55,16 +55,17 @@ def products_list(request):
         other_products = [p for p in products if p.get('status') not in ['Closed', 'Unsold', 'Ended']]
         
         # Sort closed products by end_time (descending - latest first)
-        from datetime import datetime
         def parse_end_time(product):
-            end_str = product.get('end_time', '')
-            if not end_str:
+            val = product.get('end_time')
+            if not val:
                 return datetime.min
+            if isinstance(val, datetime):
+                return val
             try:
-                if 'T' in end_str:
-                    return datetime.fromisoformat(end_str.replace('Z', '+00:00'))
-                else:
-                    return datetime.strptime(end_str, "%Y-%m-%d %H:%M")
+                s = str(val).strip()
+                if 'T' in s:
+                    return datetime.fromisoformat(s.replace('Z', '+00:00'))
+                return datetime.strptime(s, "%Y-%m-%d %H:%M")
             except:
                 return datetime.min
         

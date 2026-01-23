@@ -5,3 +5,4 @@ portalocker
 django-environ
 python-dotenv
 waitress
+pytz

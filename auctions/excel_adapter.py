@@ -41,57 +41,54 @@ class ExcelAdapter:
     def _derive_status(self, product):
         """
         Derive status based on time, unless explicitly Unsold.
+        Expects product['start_time'] and product['end_time'] to be datetime objects 
+        (if already converted by _convert_product_times).
         """
         if product.get('status') == 'Unsold':
             return 'Unsold'
             
-        start_str = product.get('start_time')
-        end_str = product.get('end_time')
+        start = product.get('start_time')
+        end = product.get('end_time')
         
-        if not start_str or not end_str:
+        if not start or not end:
             return product.get('status', 'Upcoming')
 
-        try:
-            now = datetime.now()
-            # Parse start_time - support both HH:MM and HH:MM:SS formats
-            if 'T' in start_str:
-                start_time = datetime.fromisoformat(start_str.replace('Z', '+00:00'))
-            else:
-                start_str_clean = start_str.strip()
+        import pytz
+        tz = pytz.timezone('Asia/Taipei')
+        now = datetime.now(tz)
+        
+        # Ensure we are comparing aware to aware
+        def ensure_aware(dt):
+            if isinstance(dt, str):
+                # Fallback parsing if not yet converted
                 try:
-                    start_time = datetime.strptime(start_str_clean, "%Y-%m-%d %H:%M:%S")
-                except ValueError:
-                    start_time = datetime.strptime(start_str_clean, "%Y-%m-%d %H:%M")
-            
-            # Parse end_time - support both HH:MM and HH:MM:SS formats
-            if 'T' in end_str:
-                end_time = datetime.fromisoformat(end_str.replace('Z', '+00:00'))
-            else:
-                end_str_clean = end_str.strip()
-                try:
-                    end_time = datetime.strptime(end_str_clean, "%Y-%m-%d %H:%M:%S")
-                except ValueError:
-                    end_time = datetime.strptime(end_str_clean, "%Y-%m-%d %H:%M")
-            
-            # Naive to aware conversion if needed, assuming UTC for now as per code
-            # But wait, datetime.utcnow() is naive. So let's keep everything naive or aware.
-            # Simplified: Use string comparison if ISO format, but better to parse.
-            # Let's standardize on naive matching logic or just try/except.
-            # Given previous code uses isoformat(), let's try direct comparison if formats match, 
-            # but parsing is safer.
-            
-            # Hack for quick fix: remove timezone info to compare with utcnow() which is naive
-            if start_time.tzinfo: start_time = start_time.replace(tzinfo=None)
-            if end_time.tzinfo: end_time = end_time.replace(tzinfo=None)
-            
-            if now < start_time:
-                return 'Upcoming'
-            elif now > end_time:
-                return 'Closed' # Closed
-            else:
-                return 'Open' # Active
-        except Exception:
+                    if 'T' in dt:
+                        res = datetime.fromisoformat(dt.replace('Z', '+00:00'))
+                    else:
+                        res = datetime.strptime(dt.strip(), "%Y-%m-%d %H:%M")
+                    if res.tzinfo is None:
+                        res = tz.localize(res)
+                    return res
+                except:
+                    return None
+            if isinstance(dt, datetime):
+                if dt.tzinfo is None:
+                    return tz.localize(dt)
+                return dt
+            return None
+
+        start_dt = ensure_aware(start)
+        end_dt = ensure_aware(end)
+
+        if not start_dt or not end_dt:
             return product.get('status', 'Upcoming')
+
+        if now < start_dt:
+            return 'Upcoming'
+        elif now > end_dt:
+            return 'Closed'
+        else:
+            return 'Open'
 
     def get_all_products(self):
         df = pd.read_csv(self.products_path, encoding='utf-8-sig')
@@ -99,22 +96,21 @@ class ExcelAdapter:
         products = df.to_dict(orient='records')
         valid_products = []
         for p in products:
-            # Convert ID to int to prevent float issues with URL routing
-            # Handle empty strings and ensure value exists
             if 'id' in p and p['id'] != '' and str(p['id']).strip():
                 try:
-                    p['id'] = int(float(p['id']))  # Convert via float first to handle "1.0"
-                except (ValueError, TypeError):
-                    continue  # Skip products with invalid IDs
-                    
-                p['status'] = self._derive_status(p)
+                    p['id'] = int(float(p['id']))
+                except:
+                    continue
+                
+                # Convert times FIRST, then derive status
                 p = self._convert_product_times(p)
-                # Inject main image from local folder
+                p['status'] = self._derive_status(p)
+                
                 imgs = self.get_product_images(p['id'])
                 if imgs:
                     p['main_image'] = f"/data_photo/{p['id']}/{imgs[0]}"
                 else:
-                    p['main_image'] = None # View will handle fallback
+                    p['main_image'] = None
                 valid_products.append(p)
         return valid_products
 
@@ -125,24 +121,54 @@ class ExcelAdapter:
         if res.empty:
             return None
         product = res.iloc[0].to_dict()
-        product['status'] = self._derive_status(product)
+        
+        # Convert times FIRST, then derive status
         product = self._convert_product_times(product)
+        product['status'] = self._derive_status(product)
+        
         return product
 
     def _convert_product_times(self, product):
-        """Helper to convert string times in a product dict to datetime objects."""
+        """Helper to convert various time formats to timezone-aware datetime objects."""
+        import pytz
+        tz = pytz.timezone('Asia/Taipei')
+        
         for field in ['start_time', 'end_time']:
-            if field in product and isinstance(product[field], str) and product[field].strip():
-                try:
-                    val = product[field].strip()
+            val = product.get(field)
+            if not val:
+                continue
+            
+            dt = None
+            try:
+                if isinstance(val, (datetime, pd.Timestamp)):
+                    dt = val
+                elif isinstance(val, str) and val.strip():
+                    val = val.strip()
+                    # Try ISO format
                     if 'T' in val:
-                        product[field] = datetime.fromisoformat(val.replace('Z', '+00:00'))
-                    elif len(val) > 16:
-                        product[field] = datetime.strptime(val, "%Y-%m-%d %H:%M:%S")
-                    else:
-                        product[field] = datetime.strptime(val, "%Y-%m-%d %H:%M")
-                except (ValueError, TypeError):
-                    pass # Keep as original if parsing fails
+                        try:
+                            dt = datetime.fromisoformat(val.replace('Z', '+00:00'))
+                        except: pass
+                    
+                    if not dt:
+                        # Try common formats
+                        for fmt in ["%Y-%m-%d %H:%M:%S", "%Y-%m-%d %H:%M", "%Y/%m/%d %H:%M:%S", "%Y/%m/%d %H:%M"]:
+                            try:
+                                dt = datetime.strptime(val, fmt)
+                                break
+                            except: continue
+                
+                if dt:
+                    # Ensure it's a datetime object (not Timestamp) and aware
+                    if isinstance(dt, pd.Timestamp):
+                        dt = dt.to_pydatetime()
+                    
+                    if dt.tzinfo is None:
+                        dt = tz.localize(dt)
+                    product[field] = dt
+            except Exception as e:
+                logger.warning(f"Failed to convert {field} '{val}': {e}")
+                
         return product
 
     def get_product_images(self, product_id):
