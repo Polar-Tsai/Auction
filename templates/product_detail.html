@@ -23,9 +23,33 @@
       margin: 0 !important;
     }
     
+    /* Show toggle button only on mobile */
+    #bid-toggle-btn {
+      display: flex !important;
+    }
+    
     /* Add padding to content to prevent overlap */
     .max-w-6xl {
-      padding-bottom: 200px !important;
+      padding-bottom: 250px !important;
+    }
+    
+    /* Collapsible content with smooth transition */
+    #bid-content {
+      max-height: 600px;
+      overflow: hidden;
+      transition: max-height 0.4s ease-in-out, opacity 0.3s ease-in-out;
+      opacity: 1;
+    }
+    
+    /* Collapsed state */
+    #bid-area.collapsed #bid-content {
+      max-height: 0 !important;
+      opacity: 0;
+    }
+    
+    /* Adjust bottom padding when collapsed */
+    #bid-area.collapsed ~ * {
+      padding-bottom: 80px !important;
     }
   }
   
@@ -33,6 +57,10 @@
   @media (orientation: landscape) {
     #bid-area {
       position: static;
+    }
+    
+    #bid-toggle-btn {
+      display: none !important;
     }
   }
 </style>
@@ -227,59 +255,67 @@
                     <span id="countdown-text" class="text-lg font-black text-amber-900">---</span>
                 </div>
 
-                <!-- Bidding Area (Boxed Design) -->
-                <div id="bid-area" class="{% if product.status == 'Open' %}bg-white border-2 border-gray-100{% else %}bg-gray-50 border border-gray-200{% endif %} shadow-2xl rounded-3xl overflow-hidden">
+                <!-- Bidding Area (Boxed Design with Collapse/Expand) -->
+                <div id="bid-area" class="{% if product.status == 'Open' %}bg-white border-2 border-gray-100{% else %}bg-gray-50 border border-gray-200{% endif %} shadow-2xl rounded-3xl overflow-hidden transition-all duration-300">
                     {% if employee %}
-                        <!-- Floating Header / Status Bar -->
-                        <div class="bg-gray-50/80 backdrop-blur-sm border-b border-gray-100 px-6 py-3 flex items-center justify-center gap-2 text-xs font-bold text-gray-500">
-                             <svg class="w-3 h-3" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M10 9a3 3 0 100-6 3 3 0 000 6zm-7 9a7 7 0 1114 0H3z" clip-rule="evenodd"></path></svg>
-                             {% trans "工號" %} {{ employee.employeeId }} - {{ employee.name }}
-                        </div>
+                        <!-- Toggle Button (Only on mobile) -->
+                        <button id="bid-toggle-btn" onclick="toggleBidArea()" class="w-full bg-gray-100 hover:bg-gray-200 transition py-2 flex items-center justify-center gap-2 text-sm font-bold text-gray-600" style="display: none;">
+                            <span id="bid-toggle-text">{% trans "收起出價區" %}</span>
+                            <svg id="bid-toggle-icon" class="w-4 h-4 transition-transform duration-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/>
+                            </svg>
+                        </button>
 
-                        <div class="p-6">
-                            {% if product.status == 'Open' %}
-                                <!-- Increment Bidding UI -->
-                                <div class="space-y-6">
-                                    <div class="flex justify-between items-end">
-                                        <div>
-                                            <span class="text-[10px] uppercase tracking-widest text-gray-400 font-black">{% trans "當前價格" %}</span>
-                                            <div class="text-2xl font-black text-gray-900" id="current-price-display">${{ product.current_price|default:product.start_price }}</div>
-                                        </div>
-                                        <div class="text-right">
-                                            <span class="text-[10px] uppercase tracking-widest text-[#1E40AF] font-black">{% trans "下次出價" %}</span>
-                                            <div class="text-3xl font-black" style="color: #1E40AF;">
-                                                {% if product.bids_count == 0 %}
-                                                    $<span id="next-bid-amount">{{ product.start_price }}</span>
-                                                {% else %}
-                                                    $<span id="next-bid-amount">{{ product.current_price|default:product.start_price|add:bid_increment }}</span>
-                                                {% endif %}
+                        <!-- Collapsible Content -->
+                        <div id="bid-content" class="transition-all duration-300">
+                            <!-- Floating Header / Status Bar -->
+                            <div class="bg-gray-50/80 backdrop-blur-sm border-b border-gray-100 px-6 py-3 flex items-center justify-center gap-2 text-xs font-bold text-gray-500">
+                                 <svg class="w-3 h-3" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M10 9a3 3 0 100-6 3 3 0 000 6zm-7 9a7 7 0 1114 0H3z" clip-rule="evenodd"></path></svg>
+                                 {% trans "工號" %} {{ employee.employeeId }} - {{ employee.name }}
+                            </div>
+
+                            <div class="p-6">
+                                {% if product.status == 'Open' %}
+                                    <!-- Increment Bidding UI -->
+                                    <div class="space-y-6">
+                                        <div class="flex justify-between items-end">
+                                            <div>
+                                                <span class="text-[10px] uppercase tracking-widest text-gray-400 font-black">{% trans "當前價格" %}</span>
+                                                <div class="text-2xl font-medium text-gray-900" id="current-price-display">${{ product.current_price|default:product.start_price }}</div>
                                             </div>
-                                            <div class="text-[10px] font-bold text-gray-400">
-                                                {% if product.bids_count == 0 %}({% trans "底價" %}){% else %}(+${{ bid_increment }}){% endif %}
+                                            <div class="text-right">
+                                                <span class="text-[10px] uppercase tracking-widest text-[#1E40AF] font-black">{% trans "下次出價" %}</span>
+                                                <div class="text-3xl font-black" style="color: #1E40AF;">
+                                                    {% if product.bids_count == 0 %}
+                                                        $<span id="next-bid-amount">{{ product.start_price }}</span>
+                                                    {% else %}
+                                                        $<span id="next-bid-amount">{{ product.current_price|default:product.start_price|add:bid_increment }}</span>
+                                                    {% endif %}
+                                                </div>
                                             </div>
                                         </div>
+                                        
+                                        <button onclick="placeBid()" class="w-full text-white font-black py-4 text-xl rounded-2xl shadow-xl shadow-blue-200/50 transform transition active:scale-[0.97] hover:brightness-110" style="background-color: #1E40AF;">
+                                            {% if product.bids_count == 0 %}
+                                                {% trans "出價" %} ${{ product.start_price }}
+                                            {% else %}
+                                                {% trans "出價" %} +${{ bid_increment }}
+                                            {% endif %}
+                                        </button>
+                                        
+                                        <p class="text-[10px] text-gray-400 text-center font-bold tracking-tight">{% trans "每次出價增量為底價的 1/10" %}</p>
                                     </div>
-                                    
-                                    <button onclick="placeBid()" class="w-full text-white font-black py-4 text-xl rounded-2xl shadow-xl shadow-blue-200/50 transform transition active:scale-[0.97] hover:brightness-110" style="background-color: #1E40AF;">
-                                        {% if product.bids_count == 0 %}
-                                            {% trans "出價" %} ${{ product.start_price }}
-                                        {% else %}
-                                            {% trans "出價" %} +${{ bid_increment }}
-                                        {% endif %}
-                                    </button>
-                                    
-                                    <p class="text-[10px] text-gray-400 text-center font-bold tracking-tight">{% trans "每次出價增量為底價的 1/10" %}</p>
-                                </div>
-                            {% else %}
-                                <div class="text-center py-4">
-                                    <button class="w-full bg-gray-100 text-gray-400 border border-gray-200 font-black py-4 rounded-2xl shadow-sm cursor-not-allowed text-lg" disabled>
-                                        {% if product.status == 'Upcoming' %}{% trans "尚未開始" %}
-                                        {% elif product.status == 'Closed' or product.status == 'Ended' %}{% trans "已結束" %}
-                                        {% elif product.status == 'Unsold' %}{% trans "流標" %}
-                                        {% else %}{% trans "無法出價" %}{% endif %}
-                                    </button>
-                                </div>
-                            {% endif %}
+                                {% else %}
+                                    <div class="text-center py-4">
+                                        <button class="w-full bg-gray-100 text-gray-400 border border-gray-200 font-black py-4 rounded-2xl shadow-sm cursor-not-allowed text-lg" disabled>
+                                            {% if product.status == 'Upcoming' %}{% trans "尚未開始" %}
+                                            {% elif product.status == 'Closed' or product.status == 'Ended' %}{% trans "已結束" %}
+                                            {% elif product.status == 'Unsold' %}{% trans "流標" %}
+                                            {% else %}{% trans "無法出價" %}{% endif %}
+                                        </button>
+                                    </div>
+                                {% endif %}
+                            </div>
                         </div>
                     {% else %}
                         <div class="p-8 text-center bg-blue-50">
@@ -671,5 +707,26 @@ document.addEventListener('DOMContentLoaded', () => {
 
     console.log('✅ Product detail page initialized with real-time polling');
 });
+
+// Toggle bid area collapse/expand (mobile only) - must be in global scope for onclick
+function toggleBidArea() {
+    const bidArea = document.getElementById('bid-area');
+    const toggleIcon = document.getElementById('bid-toggle-icon');
+    const toggleText = document.getElementById('bid-toggle-text');
+    
+    if (!bidArea) return;
+    
+    if (bidArea.classList.contains('collapsed')) {
+        // Expand
+        bidArea.classList.remove('collapsed');
+        if (toggleIcon) toggleIcon.style.transform = 'rotate(0deg)';
+        if (toggleText) toggleText.textContent = '{% trans "收起出價區" %}';
+    } else {
+        // Collapse
+        bidArea.classList.add('collapsed');
+        if (toggleIcon) toggleIcon.style.transform = 'rotate(180deg)';
+        if (toggleText) toggleText.textContent = '{% trans "展開出價區" %}';
+    }
+}
 </script>
 {% endblock %}

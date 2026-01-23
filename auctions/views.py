@@ -135,7 +135,7 @@ def product_detail(request, product_id):
     try:
         product = adapter.get_product_by_id(product_id)
         if not product:
-            return render(request, 'product_detail.html', {'error': '商品不存在'})
+            return render(request, 'error.html', {'error': '商品不存在'})
         
         # Calculate bid increment (start_price / 10, rounded up)
         import math
@@ -152,7 +152,7 @@ def product_detail(request, product_id):
         })
     except Exception as e:
         logger.error(f"Error loading product {product_id}", exc_info=True)
-        return render(request, 'product_detail.html', {'error': '系統錯誤'})
+        return render(request, 'error.html', {'error': '系統錯誤'})
 
 
 def product_poll(request, product_id):

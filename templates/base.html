@@ -93,10 +93,19 @@
   <div class="container mx-auto p-4">
     <!-- Desktop Header (Landscape) -->
     <header class="desktop-header justify-between items-center mb-4" style="display: none;">
-      <a href="{% url 'auctions:products_list' %}" class="flex items-center gap-3 no-underline hover:opacity-80 transition">
-        <img src="{% static 'images/logo.svg' %}" alt="Logo" class="h-10 w-10">
-        <div class="text-lg font-bold text-gray-900">龍舟計畫 - {% trans "競拍網站" %}</div>
-      </a>
+      <div class="flex items-center gap-3">
+        <!-- Back Button -->
+        <button onclick="goBack()" class="p-2 transition-all hover:opacity-70 active:scale-95" aria-label="返回" title="返回" style="display: none;" id="desktop-back-btn">
+          <svg class="w-8 h-8" fill="none" stroke="#1E40AF" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M10 19l-7-7m0 0l7-7m-7 7h18"/>
+          </svg>
+        </button>
+        <!-- Logo and Site Name -->
+        <a href="{% url 'auctions:products_list' %}" class="flex items-center gap-3 no-underline hover:opacity-80 transition">
+          <img src="{% static 'images/logo.svg' %}" alt="Logo" class="h-10 w-10">
+          <div class="text-lg font-bold text-gray-900">龍舟計畫 - {% trans "競拍網站" %}</div>
+        </a>
+      </div>
       <div class="flex items-center gap-4">
         <!-- Language Switcher -->
         <div class="flex items-center gap-2 text-sm border-r pr-4">
@@ -131,10 +140,19 @@
 
     <!-- Mobile Header (Portrait) -->
     <header class="mobile-header justify-between items-center mb-4" style="display: none;">
-      <a href="{% url 'auctions:products_list' %}" class="flex items-center gap-2 no-underline hover:opacity-80 transition">
-        <img src="{% static 'images/logo.svg' %}" alt="Logo" class="h-8 w-8">
-        <div class="text-lg font-bold text-gray-900">龍舟計畫 - {% trans "競拍網站" %}</div>
-      </a>
+      <div class="flex items-center gap-2">
+        <!-- Back Button -->
+        <button onclick="goBack()" class="p-2 transition-all hover:opacity-70 active:scale-95" aria-label="返回" title="返回" style="display: none;" id="mobile-back-btn">
+          <svg class="w-7 h-7" fill="none" stroke="#1E40AF" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M10 19l-7-7m0 0l7-7m-7 7h18"/>
+          </svg>
+        </button>
+        <!-- Logo and Site Name -->
+        <a href="{% url 'auctions:products_list' %}" class="flex items-center gap-2 no-underline hover:opacity-80 transition">
+          <img src="{% static 'images/logo.svg' %}" alt="Logo" class="h-8 w-8">
+          <div class="text-lg font-bold text-gray-900">龍舟計畫 - {% trans "競拍網站" %}</div>
+        </a>
+      </div>
       <button id="hamburger-btn" class="p-2">
         <!-- Hamburger Icon -->
         <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -158,39 +176,8 @@
           </button>
         </div>
 
-        <!-- Navigation Links (Top Section) -->
-        <div class="flex-1 px-6 overflow-y-auto">
-          {% if employee %}
-            <div class="space-y-2">
-              <!-- 拍賣清單 -->
-              <a href="{% url 'auctions:products_list' %}" class="flex items-center gap-3 py-3 px-4 hover:bg-gray-50 rounded-lg transition no-underline">
-                <svg class="w-5 h-5" style="color: #1E40AF;" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"/>
-                </svg>
-                <span class="font-medium text-gray-800">{% trans "拍賣清單" %}</span>
-              </a>
-
-              <!-- 下標紀錄 -->
-              <a href="{% url 'auctions:user_bids_list' %}" class="flex items-center gap-3 py-3 px-4 hover:bg-gray-50 rounded-lg transition no-underline">
-                <svg class="w-5 h-5" style="color: #1E40AF;" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"/>
-                </svg>
-                <span class="font-medium text-gray-800">{% trans "下標紀錄" %}</span>
-              </a>
-
-              <!-- 登出 -->
-              <a href="{% url 'auctions:logout' %}" class="flex items-center gap-3 py-3 px-4 hover:bg-gray-50 rounded-lg transition no-underline">
-                <svg class="w-5 h-5 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"/>
-                </svg>
-                <span class="font-medium text-red-600">{% trans "登出" %}</span>
-              </a>
-            </div>
-          {% endif %}
-        </div>
-
-        <!-- Language and Role Selection (Bottom Section) -->
-        <div class="border-t border-gray-200 p-6 space-y-2">
+        <!-- Language and Role Selection (Top Section) -->
+        <div class="border-b border-gray-200 px-6 pb-4 space-y-2">
           <!-- Language Selection -->
           <div class="flex items-center justify-between py-3 px-4 hover:bg-gray-50 rounded-lg cursor-pointer transition" onclick="toggleLanguageMenu(event)">
             <div class="flex items-center gap-3">
@@ -252,6 +239,38 @@
             </a>
           {% endif %}
         </div>
+
+        <!-- Navigation Links (Middle Section) -->
+        <div class="flex-1 px-6 pt-4 overflow-y-auto">
+          {% if employee %}
+            <div class="space-y-2">
+              <!-- 拍賣清單 -->
+              <a href="{% url 'auctions:products_list' %}" class="flex items-center gap-3 py-3 px-4 hover:bg-gray-50 rounded-lg transition no-underline">
+                <svg class="w-5 h-5" style="color: #1E40AF;" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"/>
+                </svg>
+                <span class="font-medium text-gray-800">{% trans "拍賣清單" %}</span>
+              </a>
+
+              <!-- 下標紀錄 -->
+              <a href="{% url 'auctions:user_bids_list' %}" class="flex items-center gap-3 py-3 px-4 hover:bg-gray-50 rounded-lg transition no-underline">
+                <svg class="w-5 h-5" style="color: #1E40AF;" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"/>
+                </svg>
+                <span class="font-medium text-gray-800">{% trans "下標紀錄" %}</span>
+              </a>
+
+              <!-- 登出 -->
+              <a href="{% url 'auctions:logout' %}" class="flex items-center gap-3 py-3 px-4 hover:bg-gray-50 rounded-lg transition no-underline">
+                <svg class="w-5 h-5 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"/>
+                </svg>
+                <span class="font-medium text-red-600">{% trans "登出" %}</span>
+              </a>
+            </div>
+          {% endif %}
+        </div>
+      
       </div>
     </div>
 
@@ -299,6 +318,32 @@
       // Prevent menu clicks from closing the menu
       document.getElementById('hamburger-menu').addEventListener('click', function(e) {
         e.stopPropagation();
+      });
+
+      // Smart back button function (only for product detail pages)
+      function goBack() {
+        // Check if there's browser history from this site
+        if (document.referrer && document.referrer.includes(window.location.hostname)) {
+          // Go back to previous page (preserves tab state automatically)
+          window.history.back();
+        } else {
+          // No referrer or external referrer - go to product list
+          const langPrefix = window.location.pathname.split('/')[1];
+          window.location.href = `/${langPrefix}/products/`;
+        }
+      }
+
+      // Show back button only on product detail pages
+      document.addEventListener('DOMContentLoaded', function() {
+        const currentPath = window.location.pathname;
+        const isProductDetailPage = /\/products\/\d+\/?$/.test(currentPath);
+        
+        if (isProductDetailPage) {
+          const desktopBackBtn = document.getElementById('desktop-back-btn');
+          const mobileBackBtn = document.getElementById('mobile-back-btn');
+          if (desktopBackBtn) desktopBackBtn.style.display = 'block';
+          if (mobileBackBtn) mobileBackBtn.style.display = 'block';
+        }
       });
     </script>
 
