@@ -99,23 +99,25 @@ class BidService:
         if amount > 999999: # Cap
              raise BusinessException("Bid amount too high", code='INVALID_BID_AMOUNT')
 
+        # Rule: Self-bidding restriction (Cannot outbid yourself)
+        highest_bidder_id = self.adapter._normalize_id(product.get('highest_bidder_id'))
+        normalized_employee_id = self.adapter._normalize_id(employee_id)
+        
+        if highest_bidder_id == normalized_employee_id:
+            raise BusinessException("你已經是目前最高出價者囉！", code='ALREADY_HIGHEST_BIDDER')
+
         # Rule: Frequency Check (< 1 second)
         if recent_bids:
             last_bid = recent_bids[0]
-            if str(last_bid.get('bidder_id')) == str(employee_id):
-                # Using aware datetime for comparison to avoid crash
+            # Ensure we compare normalized IDs
+            if self.adapter._normalize_id(last_bid.get('bidder_id')) == normalized_employee_id:
                 try:
                     last_ts = datetime.fromisoformat(str(last_bid['bid_timestamp']))
                     if last_ts.tzinfo is None:
                         last_ts = TAIPEI_TZ.localize(last_ts)
                     
                     if (datetime.now(TAIPEI_TZ) - last_ts).total_seconds() < 1:
-                        # Check if user is currently the highest bidder
-                        highest_bidder = product.get('highest_bidder_id')
-                        if str(highest_bidder) == str(employee_id):
-                            raise BusinessException("出價太頻繁，你是目前最高出價者唷！", code='BID_TOO_FREQUENT')
-                        else:
-                            raise BusinessException("出價太頻繁，請稍後再試", code='BID_TOO_FREQUENT')
+                        raise BusinessException("出價太頻繁，請稍後再試", code='BID_TOO_FREQUENT')
                 except Exception as eval_err:
                     logger.warning(f"Error checking bid frequency: {eval_err}")
                     pass
