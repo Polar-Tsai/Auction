@@ -23,7 +23,7 @@
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/>
                     </svg>
                     
-                    <!-- Product Name with Smart Language Split & Mobile Truncation -->
+                    <!-- Product Name with Smart Language Split -->
                     <div class="flex items-center gap-2 flex-1 min-w-0">
                         <a href="{% url 'auctions:product_detail' product.product_id %}" 
                            class="product-name-link font-bold hover:underline"
@@ -48,14 +48,6 @@
                                 {% endif %}
                             </span>
                         </a>
-                        
-                        <!-- Mobile Expand Button (hidden on desktop) -->
-                        <button class="expand-btn text-gray-400 hover:text-gray-600 text-xs whitespace-nowrap hidden"
-                                onclick="event.stopPropagation(); toggleNameExpand({{ product.product_id }})"
-                                id="expand-btn-{{ product.product_id }}">
-                            <span class="expand-text">{% trans "展開" %}</span>
-                            <span class="collapse-text hidden">{% trans "收起" %}</span>
-                        </button>
                     </div>
                     
                     <!-- Bid Count -->
@@ -97,36 +89,7 @@
     {% endif %}
 </div>
 
-<style>
-/* Mobile: Truncate product names */
-@media (max-width: 768px) {
-    .product-name-link .name-display {
-        display: block;
-        max-width: 200px;
-        overflow: hidden;
-        text-overflow: ellipsis;
-        white-space: nowrap;
-    }
-    
-    .product-name-link.expanded .name-display {
-        max-width: none;
-        white-space: normal;
-        word-break: break-word;
-    }
-    
-    /* Show expand button on mobile */
-    .expand-btn {
-        display: inline-block !important;
-    }
-}
 
-/* Desktop: Hide expand button */
-@media (min-width: 769px) {
-    .expand-btn {
-        display: none !important;
-    }
-}
-</style>
 
 <script>
 // Get current language from URL
@@ -139,29 +102,6 @@ function getCurrentLanguage() {
 // Initialize product names on page load
 function initializeProductNames() {
     console.log('Product names handled by template logic');
-}
-
-// Toggle name expansion on mobile
-function toggleNameExpand(productId) {
-    const link = document.querySelector(`[data-product-id="${productId}"]`);
-    const expandBtn = document.getElementById(`expand-btn-${productId}`);
-    
-    if (!link || !expandBtn) return;
-    
-    const expandText = expandBtn.querySelector('.expand-text');
-    const collapseText = expandBtn.querySelector('.collapse-text');
-    
-    if (link.classList.contains('expanded')) {
-        // Collapse
-        link.classList.remove('expanded');
-        expandText.classList.remove('hidden');
-        collapseText.classList.add('hidden');
-    } else {
-        // Expand
-        link.classList.add('expanded');
-        expandText.classList.add('hidden');
-        collapseText.classList.remove('hidden');
-    }
 }
 
 // Toggle product bid list
