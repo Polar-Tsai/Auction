@@ -1,8 +1,12 @@
 import os
-import time
+import logging
 import pandas as pd
 import portalocker
+import pytz
 from datetime import datetime
+
+logger = logging.getLogger(__name__)
+TAIPEI_TZ = pytz.timezone('Asia/Taipei')
 
 class ExcelAdapter:
     def __init__(self, data_dir):
@@ -41,8 +45,6 @@ class ExcelAdapter:
     def _derive_status(self, product):
         """
         Derive status based on time, unless explicitly Unsold.
-        Expects product['start_time'] and product['end_time'] to be datetime objects 
-        (if already converted by _convert_product_times).
         """
         if product.get('status') == 'Unsold':
             return 'Unsold'
@@ -53,28 +55,38 @@ class ExcelAdapter:
         if not start or not end:
             return product.get('status', 'Upcoming')
 
-        import pytz
-        tz = pytz.timezone('Asia/Taipei')
-        now = datetime.now(tz)
+        now = datetime.now(TAIPEI_TZ)
         
         # Ensure we are comparing aware to aware
-        def ensure_aware(dt):
-            if isinstance(dt, str):
-                # Fallback parsing if not yet converted
-                try:
-                    if 'T' in dt:
-                        res = datetime.fromisoformat(dt.replace('Z', '+00:00'))
-                    else:
-                        res = datetime.strptime(dt.strip(), "%Y-%m-%d %H:%M")
-                    if res.tzinfo is None:
-                        res = tz.localize(res)
-                    return res
-                except:
-                    return None
-            if isinstance(dt, datetime):
+        def ensure_aware(val):
+            if not val: return None
+            if isinstance(val, (datetime, pd.Timestamp)):
+                dt = val.to_pydatetime() if hasattr(val, 'to_pydatetime') else val
                 if dt.tzinfo is None:
-                    return tz.localize(dt)
+                    dt = TAIPEI_TZ.localize(dt)
                 return dt
+            
+            # Fallback parsing for strings
+            if isinstance(val, str) and val.strip():
+                s = val.strip()
+                # Try fromisoformat first (Python 3.7+)
+                try:
+                    dt = datetime.fromisoformat(s.replace('Z', '+00:00'))
+                    if dt.tzinfo is None: dt = TAIPEI_TZ.localize(dt)
+                    return dt
+                except: pass
+                
+                formats = [
+                    "%Y-%m-%dT%H:%M:%S", "%Y-%m-%dT%H:%M",
+                    "%Y-%m-%d %H:%M:%S", "%Y-%m-%d %H:%M",
+                    "%Y/%m/%d %H:%M:%S", "%Y/%m/%d %H:%M"
+                ]
+                for fmt in formats:
+                    try:
+                        dt = datetime.strptime(s, fmt)
+                        if dt.tzinfo is None: dt = TAIPEI_TZ.localize(dt)
+                        return dt
+                    except: continue
             return None
 
         start_dt = ensure_aware(start)
@@ -130,44 +142,34 @@ class ExcelAdapter:
 
     def _convert_product_times(self, product):
         """Helper to convert various time formats to timezone-aware datetime objects."""
-        import pytz
-        tz = pytz.timezone('Asia/Taipei')
-        
         for field in ['start_time', 'end_time']:
             val = product.get(field)
             if not val:
                 continue
             
             dt = None
-            try:
-                if isinstance(val, (datetime, pd.Timestamp)):
-                    dt = val
-                elif isinstance(val, str) and val.strip():
-                    val = val.strip()
-                    # Try ISO format
-                    if 'T' in val:
+            if isinstance(val, (datetime, pd.Timestamp)):
+                dt = val.to_pydatetime() if hasattr(val, 'to_pydatetime') else val
+            elif isinstance(val, str) and val.strip():
+                s = val.strip()
+                try:
+                    dt = datetime.fromisoformat(s.replace('Z', '+00:00'))
+                except:
+                    formats = [
+                        "%Y-%m-%dT%H:%M:%S", "%Y-%m-%dT%H:%M",
+                        "%Y-%m-%d %H:%M:%S", "%Y-%m-%d %H:%M",
+                        "%Y/%m/%d %H:%M:%S", "%Y/%m/%d %H:%M"
+                    ]
+                    for fmt in formats:
                         try:
-                            dt = datetime.fromisoformat(val.replace('Z', '+00:00'))
-                        except: pass
-                    
-                    if not dt:
-                        # Try common formats
-                        for fmt in ["%Y-%m-%d %H:%M:%S", "%Y-%m-%d %H:%M", "%Y/%m/%d %H:%M:%S", "%Y/%m/%d %H:%M"]:
-                            try:
-                                dt = datetime.strptime(val, fmt)
-                                break
-                            except: continue
-                
-                if dt:
-                    # Ensure it's a datetime object (not Timestamp) and aware
-                    if isinstance(dt, pd.Timestamp):
-                        dt = dt.to_pydatetime()
-                    
-                    if dt.tzinfo is None:
-                        dt = tz.localize(dt)
-                    product[field] = dt
-            except Exception as e:
-                logger.warning(f"Failed to convert {field} '{val}': {e}")
+                            dt = datetime.strptime(s, fmt)
+                            break
+                        except: continue
+            
+            if dt:
+                if dt.tzinfo is None:
+                    dt = TAIPEI_TZ.localize(dt)
+                product[field] = dt
                 
         return product
 
