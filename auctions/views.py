@@ -8,10 +8,14 @@ from django.views.decorators.csrf import csrf_exempt
 from django.conf import settings
 
 from datetime import datetime
+import pytz
 from django.utils import timezone
 from .excel_adapter import ExcelAdapter
 from .services import BidService, AuthService
 from common.exceptions import BusinessException, SystemException
+
+# Timezone settings
+TAIPEI_TZ = pytz.timezone('Asia/Taipei')
 
 # Initialize logger (using common logger if configured, else standard django logger)
 logger = logging.getLogger(__name__)
