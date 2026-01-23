@@ -2,6 +2,26 @@
 // Real-time Polling System for Auction Website
 // ============================================
 
+// --- Time Synchronization Logic ---
+// Global object to manage server-client time offset
+const ServerTime = {
+    offset: 0, // ms: server_time - local_time
+    isSynced: false,
+
+    sync(serverIsoString) {
+        if (!serverIsoString) return;
+        const serverTime = new Date(serverIsoString).getTime();
+        const localTime = Date.now();
+        this.offset = serverTime - localTime;
+        this.isSynced = true;
+        // console.log(`🕒 Time Synced. Offset: ${this.offset}ms (Server - Local)`);
+    },
+
+    now() {
+        return Date.now() + this.offset;
+    }
+};
+
 // Translation strings (will be injected by Django template)
 let i18nStrings = {};
 
@@ -44,6 +64,9 @@ class ProductListPoller {
             const data = await response.json();
 
             if (data.success) {
+                // Sync time
+                ServerTime.sync(data.timestamp);
+
                 this.updateProducts(data.products);
                 this.updateStatusCounts(data.status_counts);
                 this.failCount = 0; // Reset on success
@@ -299,6 +322,9 @@ class ProductDetailPoller {
             const data = await response.json();
 
             if (data.success) {
+                // Sync time
+                ServerTime.sync(data.timestamp);
+
                 this.updateProduct(data.product);
                 this.updateHighestBidder(data.highest_bidder);
                 this.updateBidHistory(data.bids);
@@ -442,6 +468,7 @@ function setupVisibilityHandling(poller) {
 // ============================================
 // Export for use in templates
 // ============================================
+window.ServerTime = ServerTime;
 window.ProductListPoller = ProductListPoller;
 window.ProductDetailPoller = ProductDetailPoller;
 window.setupVisibilityHandling = setupVisibilityHandling;

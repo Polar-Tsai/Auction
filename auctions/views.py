@@ -196,6 +196,7 @@ def product_poll(request, product_id):
         
         return JsonResponse({
             'success': True, 
+            'timestamp': datetime.now(TAIPEI_TZ).isoformat(),
             'product': product, 
             'bids': bids,
             'highest_bidder': highest_bidder
@@ -286,7 +287,7 @@ def products_poll(request):
         
         return JsonResponse({
             'success': True,
-            'timestamp': datetime.now().isoformat(),
+            'timestamp': datetime.now(TAIPEI_TZ).isoformat(),
             'products': products,
             'status_counts': status_counts
         })

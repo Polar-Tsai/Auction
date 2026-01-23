@@ -409,7 +409,7 @@ function updateCountdown() {
     const targetStr = (productStatus === 'Upcoming') ? startTimeStr : endTimeStr;
     if (!targetStr) return;
 
-    const now = Date.now();
+    const now = (typeof ServerTime !== 'undefined') ? ServerTime.now() : Date.now();
     const target = new Date(targetStr).getTime();
     const dist = target - now;
 
