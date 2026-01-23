@@ -366,41 +366,54 @@ let currentBidsCount = {{ product.bids_count|default:0 }};  // Track if there ar
 
 function updateCountdown() {
     const el = document.getElementById('countdown-text');
-    if (!el || !endTimeStr) return;
-    
+    const timerRow = el ? el.closest('.bg-gray-50') : null;
+    if (!el || !timerRow) return;
+
+    // Use startTimeStr if upcoming, else endTimeStr
+    const targetStr = (productStatus === 'Upcoming') ? startTimeStr : endTimeStr;
+    if (!targetStr) return;
+
     const now = Date.now();
-    const end = new Date(endTimeStr).getTime();
-    const dist = end - now;
+    const target = new Date(targetStr).getTime();
+    const dist = target - now;
+
+    // Helper for 00 padding
+    const pad = (num) => String(num).padStart(2, '0');
     
     if (dist < 0) {
-        el.innerText = i18n.ended;
-        
-        // Disable UI immediately when time is up
-        const statusEl = document.getElementById('status-display');
-        if (statusEl) {
-            statusEl.className = 'absolute top-0 right-0 px-3 py-1 rounded-full text-sm font-medium bg-gray-100 text-gray-800';
-            statusEl.innerText = i18n.ended;
+        if (productStatus === 'Open' || productStatus === 'Closed' || productStatus === 'Unsold') {
+            // Hide the timer block when ended
+            timerRow.style.display = 'none';
+            el.innerText = i18n.ended;
+            
+            // UI updates
+            const statusEl = document.getElementById('status-display');
+            if (statusEl) {
+                statusEl.className = 'absolute top-0 right-0 px-3 py-1 rounded-full text-sm font-medium bg-gray-100 text-gray-800';
+                statusEl.innerText = i18n.ended;
+            }
+            const bidButton = document.querySelector('button[onclick="placeBid()"]');
+            if (bidButton) {
+                bidButton.disabled = true;
+                bidButton.className = "w-full bg-gray-300 text-gray-500 font-bold py-3 rounded shadow-md cursor-not-allowed";
+                bidButton.innerText = i18n.ended;
+                bidButton.onclick = null;
+            }
+        } else {
+            // If upcoming ended, it should be starting soon (poll will update status)
+            el.innerText = i18n.start;
         }
-
-        // Disable bidding area
-        const bidButton = document.querySelector('button[onclick="placeBid()"]');
-        if (bidButton) {
-            bidButton.disabled = true;
-            bidButton.className = "w-full bg-gray-300 text-gray-500 font-bold py-3 rounded shadow-md cursor-not-allowed";
-            bidButton.innerText = i18n.ended;
-            bidButton.onclick = null; // Remove handler
-        }
-        
         return;
     }
     
+    timerRow.style.display = 'block';
     const h = Math.floor(dist / (1000 * 60 * 60));
     const m = Math.floor((dist % (1000 * 60 * 60)) / (1000 * 60));
     const s = Math.floor((dist % (1000 * 60)) / 1000);
     
     // Determine if we're counting down to start or end
     const countdownAction = (productStatus === 'Upcoming') ? i18n.start : i18n.end;
-    el.innerText = `${h}${i18n.hour}${m}${i18n.minute}${s}${i18n.second}後${countdownAction}`;
+    el.innerText = `${pad(h)}${i18n.hour}${pad(m)}${i18n.minute}${pad(s)}${i18n.second}${countdownAction}`;
 }
 
 function showToast(message, type='info') {

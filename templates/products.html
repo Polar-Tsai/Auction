@@ -234,32 +234,40 @@
       const endTimeStr = card.getAttribute('data-end');
       const startTimeStr = card.getAttribute('data-start');
       const timerEl = card.querySelector('.countdown-timer');
+      const timerRow = timerEl ? timerEl.parentElement : null;
       
-      if (!timerEl) return;
+      if (!timerEl || !timerRow) return;
+
+      // Helper for 00 padding
+      const pad = (num) => String(num).padStart(2, '0');
 
       if (status === 'Open' && endTimeStr) {
+        timerRow.style.display = 'flex';
         const end = new Date(endTimeStr).getTime();
         const dist = end - now;
         if (dist < 0) {
           timerEl.innerText = i18n.ended;
         } else {
-           const h = Math.floor(dist / (1000 * 60 * 60));
-           const m = Math.floor((dist % (1000 * 60 * 60)) / (1000 * 60));
-           const s = Math.floor((dist % (1000 * 60)) / 1000);
-           timerEl.innerText = `${h}${i18n.hour}${m}${i18n.minute}${s}${i18n.second}${i18n.end}`;
+          const h = Math.floor(dist / (1000 * 60 * 60));
+          const m = Math.floor((dist % (1000 * 60 * 60)) / (1000 * 60));
+          const s = Math.floor((dist % (1000 * 60)) / 1000);
+          timerEl.innerText = `${pad(h)}${i18n.hour}${pad(m)}${i18n.minute}${pad(s)}${i18n.second}${i18n.end}`;
         }
       } else if (status === 'Upcoming' && startTimeStr) {
+        timerRow.style.display = 'flex';
         const start = new Date(startTimeStr).getTime();
         const dist = start - now;
         if (dist < 0) {
-             timerEl.innerText = i18n.starting;
+          timerEl.innerText = i18n.starting;
         } else {
-           const h = Math.floor(dist / (1000 * 60 * 60));
-           const m = Math.floor((dist % (1000 * 60 * 60)) / (1000 * 60));
-           const s = Math.floor((dist % (1000 * 60)) / 1000);
-           timerEl.innerText = `${h}${i18n.hour}${m}${i18n.minute}${s}${i18n.second}${i18n.start}`;
+          const h = Math.floor(dist / (1000 * 60 * 60));
+          const m = Math.floor((dist % (1000 * 60 * 60)) / (1000 * 60));
+          const s = Math.floor((dist % (1000 * 60)) / 1000);
+          timerEl.innerText = `${pad(h)}${i18n.hour}${pad(m)}${i18n.minute}${pad(s)}${i18n.second}${i18n.start}`;
         }
       } else {
+        // Hide entire row for Closed, Ends, Unsold
+        timerRow.style.display = 'none';
         timerEl.innerText = '---';
       }
     });
