@@ -182,8 +182,8 @@
                 <div class="flex items-start mb-8 group">
                     <span class="text-gray-900 font-bold whitespace-nowrap mr-8 py-0.5 border-l-4 border-[#1E40AF] pl-3">{% trans "商品描述" %}</span>
                     <p class="text-gray-700 leading-relaxed text-base">
-                        {% if "," in product.description %}
-                            {% with desc_parts=product.description|split:"," %}
+                        {% if "#" in product.description %}
+                            {% with desc_parts=product.description|split:"#" %}
                                 {% if LANGUAGE_CODE|slice:":2" == "zh" %}
                                     {{ desc_parts.0 }}
                                 {% elif LANGUAGE_CODE == "id" and desc_parts|length > 1 %}
