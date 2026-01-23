@@ -108,6 +108,7 @@ class ExcelAdapter:
                     continue  # Skip products with invalid IDs
                     
                 p['status'] = self._derive_status(p)
+                p = self._convert_product_times(p)
                 # Inject main image from local folder
                 imgs = self.get_product_images(p['id'])
                 if imgs:
@@ -125,29 +126,23 @@ class ExcelAdapter:
             return None
         product = res.iloc[0].to_dict()
         product['status'] = self._derive_status(product)
-        # Convert strings to datetime objects for template formatting
-        try:
-            if 'end_time' in product and isinstance(product['end_time'], str):
-                if 'T' in product['end_time']:
-                    product['end_time'] = datetime.fromisoformat(product['end_time'].replace('Z', '+00:00'))
-                else:
-                    end_time_clean = product['end_time'].strip()
-                    try:
-                        product['end_time'] = datetime.strptime(end_time_clean, "%Y-%m-%d %H:%M:%S")
-                    except ValueError:
-                        product['end_time'] = datetime.strptime(end_time_clean, "%Y-%m-%d %H:%M")
-            
-            if 'start_time' in product and isinstance(product['start_time'], str):
-                if 'T' in product['start_time']:
-                    product['start_time'] = datetime.fromisoformat(product['start_time'].replace('Z', '+00:00'))
-                else:
-                    start_time_clean = product['start_time'].strip()
-                    try:
-                        product['start_time'] = datetime.strptime(start_time_clean, "%Y-%m-%d %H:%M:%S")
-                    except ValueError:
-                        product['start_time'] = datetime.strptime(start_time_clean, "%Y-%m-%d %H:%M")
-        except:
-            pass # Keep as strings if parse fails
+        product = self._convert_product_times(product)
+        return product
+
+    def _convert_product_times(self, product):
+        """Helper to convert string times in a product dict to datetime objects."""
+        for field in ['start_time', 'end_time']:
+            if field in product and isinstance(product[field], str) and product[field].strip():
+                try:
+                    val = product[field].strip()
+                    if 'T' in val:
+                        product[field] = datetime.fromisoformat(val.replace('Z', '+00:00'))
+                    elif len(val) > 16:
+                        product[field] = datetime.strptime(val, "%Y-%m-%d %H:%M:%S")
+                    else:
+                        product[field] = datetime.strptime(val, "%Y-%m-%d %H:%M")
+                except (ValueError, TypeError):
+                    pass # Keep as original if parsing fails
         return product
 
     def get_product_images(self, product_id):
