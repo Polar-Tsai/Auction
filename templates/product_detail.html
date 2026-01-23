@@ -366,7 +366,7 @@ let currentBidsCount = {{ product.bids_count|default:0 }};  // Track if there ar
 
 function updateCountdown() {
     const el = document.getElementById('countdown-text');
-    const timerRow = el ? el.closest('.bg-gray-50') : null;
+    const timerRow = el ? el.parentElement : null;
     if (!el || !timerRow) return;
 
     // Use startTimeStr if upcoming, else endTimeStr

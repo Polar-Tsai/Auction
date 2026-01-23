@@ -22,8 +22,7 @@ class ExcelAdapter:
             (self.bids_path, ['id','product_id','bidder_id','amount','bid_timestamp'])
         ]:
             if not os.path.exists(p):
-                df = pd.DataFrame(columns=cols)
-                df.to_csv(p, index=False)
+                pd.DataFrame(columns=cols).to_csv(p, index=False, encoding='utf-8-sig')
 
     def _lock_and_read(self, path):
         f = open(path, 'r+', encoding='utf-8')
@@ -42,6 +41,40 @@ class ExcelAdapter:
         portalocker.unlock(f)
         f.close()
 
+    def _ensure_aware(self, val):
+        """Robustly convert a value (string, datetime, Timestamp) to an aware Taipei datetime."""
+        if not val or pd.isna(val) or val == '':
+            return None
+            
+        dt = None
+        if isinstance(val, (datetime, pd.Timestamp)):
+            dt = val.to_pydatetime() if isinstance(val, pd.Timestamp) else val
+        elif isinstance(val, str) and val.strip():
+            s = val.strip()
+            # Try ISO formats and common variations
+            # Python < 3.11 fromisoformat is strict, so we use strptime fallbacks
+            formats = [
+                "%Y-%m-%dT%H:%M:%S", "%Y-%m-%dT%H:%M",
+                "%Y-%m-%d %H:%M:%S", "%Y-%m-%d %H:%M",
+                "%Y/%m/%d %H:%M:%S", "%Y/%m/%d %H:%M"
+            ]
+            
+            # Try fromisoformat first
+            try:
+                dt = datetime.fromisoformat(s.replace('Z', '+00:00'))
+            except:
+                for fmt in formats:
+                    try:
+                        dt = datetime.strptime(s, fmt)
+                        break
+                    except: continue
+        
+        if dt:
+            if dt.tzinfo is None:
+                dt = TAIPEI_TZ.localize(dt)
+            return dt
+        return None
+
     def _derive_status(self, product):
         """
         Derive status based on time, unless explicitly Unsold.
@@ -49,52 +82,14 @@ class ExcelAdapter:
         if product.get('status') == 'Unsold':
             return 'Unsold'
             
-        start = product.get('start_time')
-        end = product.get('end_time')
+        start_dt = self._ensure_aware(product.get('start_time'))
+        end_dt = self._ensure_aware(product.get('end_time'))
         
-        if not start or not end:
+        if not start_dt or not end_dt:
             return product.get('status', 'Upcoming')
 
         now = datetime.now(TAIPEI_TZ)
         
-        # Ensure we are comparing aware to aware
-        def ensure_aware(val):
-            if not val: return None
-            if isinstance(val, (datetime, pd.Timestamp)):
-                dt = val.to_pydatetime() if hasattr(val, 'to_pydatetime') else val
-                if dt.tzinfo is None:
-                    dt = TAIPEI_TZ.localize(dt)
-                return dt
-            
-            # Fallback parsing for strings
-            if isinstance(val, str) and val.strip():
-                s = val.strip()
-                # Try fromisoformat first (Python 3.7+)
-                try:
-                    dt = datetime.fromisoformat(s.replace('Z', '+00:00'))
-                    if dt.tzinfo is None: dt = TAIPEI_TZ.localize(dt)
-                    return dt
-                except: pass
-                
-                formats = [
-                    "%Y-%m-%dT%H:%M:%S", "%Y-%m-%dT%H:%M",
-                    "%Y-%m-%d %H:%M:%S", "%Y-%m-%d %H:%M",
-                    "%Y/%m/%d %H:%M:%S", "%Y/%m/%d %H:%M"
-                ]
-                for fmt in formats:
-                    try:
-                        dt = datetime.strptime(s, fmt)
-                        if dt.tzinfo is None: dt = TAIPEI_TZ.localize(dt)
-                        return dt
-                    except: continue
-            return None
-
-        start_dt = ensure_aware(start)
-        end_dt = ensure_aware(end)
-
-        if not start_dt or not end_dt:
-            return product.get('status', 'Upcoming')
-
         if now < start_dt:
             return 'Upcoming'
         elif now > end_dt:
@@ -104,15 +99,22 @@ class ExcelAdapter:
 
     def get_all_products(self):
         df = pd.read_csv(self.products_path, encoding='utf-8-sig')
-        df = df.fillna('')
+        
         products = df.to_dict(orient='records')
         valid_products = []
         for p in products:
-            if 'id' in p and p['id'] != '' and str(p['id']).strip():
-                try:
-                    p['id'] = int(float(p['id']))
-                except:
-                    continue
+            # Skip empty rows or rows without ID
+            if not p.get('id') or pd.isna(p.get('id')):
+                continue
+                
+            try:
+                # Clean numerical values
+                p['id'] = int(float(p['id']))
+                
+                # Sanitize other fields (replace NaN with empty string)
+                for key in p:
+                    if pd.isna(p[key]):
+                        p[key] = ''
                 
                 # Convert times FIRST, then derive status
                 p = self._convert_product_times(p)
@@ -124,16 +126,24 @@ class ExcelAdapter:
                 else:
                     p['main_image'] = None
                 valid_products.append(p)
+            except Exception as e:
+                logger.warning(f"Error processing product row: {e}")
+                continue
+                
         return valid_products
 
     def get_product_by_id(self, product_id):
         df = pd.read_csv(self.products_path, encoding='utf-8-sig')
-        df = df.fillna('')
         res = df[df['id'] == int(product_id)]
         if res.empty:
             return None
+            
         product = res.iloc[0].to_dict()
-        
+        # Sanitize (replace NaN with empty string)
+        for key in product:
+            if pd.isna(product[key]):
+                product[key] = ''
+            
         # Convert times FIRST, then derive status
         product = self._convert_product_times(product)
         product['status'] = self._derive_status(product)
@@ -144,32 +154,13 @@ class ExcelAdapter:
         """Helper to convert various time formats to timezone-aware datetime objects."""
         for field in ['start_time', 'end_time']:
             val = product.get(field)
-            if not val:
-                continue
-            
-            dt = None
-            if isinstance(val, (datetime, pd.Timestamp)):
-                dt = val.to_pydatetime() if hasattr(val, 'to_pydatetime') else val
-            elif isinstance(val, str) and val.strip():
-                s = val.strip()
-                try:
-                    dt = datetime.fromisoformat(s.replace('Z', '+00:00'))
-                except:
-                    formats = [
-                        "%Y-%m-%dT%H:%M:%S", "%Y-%m-%dT%H:%M",
-                        "%Y-%m-%d %H:%M:%S", "%Y-%m-%d %H:%M",
-                        "%Y/%m/%d %H:%M:%S", "%Y/%m/%d %H:%M"
-                    ]
-                    for fmt in formats:
-                        try:
-                            dt = datetime.strptime(s, fmt)
-                            break
-                        except: continue
-            
+            dt = self._ensure_aware(val)
             if dt:
-                if dt.tzinfo is None:
-                    dt = TAIPEI_TZ.localize(dt)
                 product[field] = dt
+            else:
+                # Ensure it's not a NaN object to avoid template issues
+                if pd.isna(val) or val is None:
+                    product[field] = ''
                 
         return product
 
