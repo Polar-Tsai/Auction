@@ -1,9 +1,13 @@
 import logging
+import pytz
 from datetime import datetime, timedelta
 from common.exceptions import BusinessException, SystemException
 from common.logger import get_logger
 
 logger = get_logger(__name__)
+
+# Timezone settings
+TAIPEI_TZ = pytz.timezone('Asia/Taipei')
 
 # Anti-sniper: extend end time if bid within this threshold
 ANTI_SNIPER_THRESHOLD_SECONDS = 10
@@ -32,15 +36,13 @@ class BidService:
             
             # 4. Anti-Sniper: Check if we need to extend the auction time
             try:
-                import pytz
-                TAIPEI_TZ = pytz.timezone('Asia/Taipei')
-                
                 end_time = product.get('end_time')
                 if end_time and isinstance(end_time, datetime):
-                    # Ensure end_time is aware
+                    # Ensure end_time is aware (from Taipei)
                     if end_time.tzinfo is None:
                         end_time = TAIPEI_TZ.localize(end_time)
                     
+                    # Current time must also be Aware Taipei Time
                     current_time = datetime.now(TAIPEI_TZ)
                     time_remaining = (end_time - current_time).total_seconds()
                     
@@ -86,19 +88,6 @@ class BidService:
         current_price = int(product.get('current_price') or product.get('start_price', 0))
         start_price = int(product.get('start_price', 0))
         
-        # Check if any bids exist to determine if we compare against start or current
-        # Optimization: We might need to ask adapter if there are bids, 
-        # but here we can infer or simpler: Bid must be > current_price (which starts as start_price)
-        # However, the original logic had specific checks.
-        # Let's simplify: New Amount MUST be > Current Price.
-        # Note: If no bids, current_price usually equals start_price. 
-        # But if current_price is 0 for some reason?
-        
-        # Standardize logic: 
-        # If no bids, amount must be >= start_price? 
-        # Original code: "if amount < start_price and no bids" -> Fail.
-        
-        # We need to query recent bids to check frequency too.
         recent_bids = self.adapter.get_bids_for_product(product['id'], limit=1)
         
         if not recent_bids and amount < start_price:
@@ -114,14 +103,22 @@ class BidService:
         if recent_bids:
             last_bid = recent_bids[0]
             if str(last_bid.get('bidder_id')) == str(employee_id):
-                last_ts = datetime.fromisoformat(str(last_bid['bid_timestamp']))
-                if (datetime.utcnow() - last_ts).total_seconds() < 1:
-                    # Check if user is currently the highest bidder
-                    highest_bidder = product.get('highest_bidder_id')
-                    if str(highest_bidder) == str(employee_id):
-                        raise BusinessException("出價太頻繁，你是目前最高出價者唷！", code='BID_TOO_FREQUENT')
-                    else:
-                        raise BusinessException("出價太頻繁，請稍後再試", code='BID_TOO_FREQUENT')
+                # Using aware datetime for comparison to avoid crash
+                try:
+                    last_ts = datetime.fromisoformat(str(last_bid['bid_timestamp']))
+                    if last_ts.tzinfo is None:
+                        last_ts = TAIPEI_TZ.localize(last_ts)
+                    
+                    if (datetime.now(TAIPEI_TZ) - last_ts).total_seconds() < 1:
+                        # Check if user is currently the highest bidder
+                        highest_bidder = product.get('highest_bidder_id')
+                        if str(highest_bidder) == str(employee_id):
+                            raise BusinessException("出價太頻繁，你是目前最高出價者唷！", code='BID_TOO_FREQUENT')
+                        else:
+                            raise BusinessException("出價太頻繁，請稍後再試", code='BID_TOO_FREQUENT')
+                except Exception as eval_err:
+                    logger.warning(f"Error checking bid frequency: {eval_err}")
+                    pass
 
 class AuthService:
     def __init__(self, adapter):

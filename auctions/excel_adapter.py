@@ -415,7 +415,7 @@ class ExcelAdapter:
 
             # Append bid
             new_id = 1 if df_bids.empty else int(df_bids['id'].max()) + 1
-            ts = datetime.now().isoformat()
+            ts = datetime.now(TAIPEI_TZ).isoformat()
             new_bid = {'id': new_id, 'product_id': int(product_id), 'bidder_id': employee_id, 'amount': amount, 'bid_timestamp': ts}
             
             # concat is preferred over append (deprecated) in newer pandas, but sticking to style if older.
@@ -464,8 +464,8 @@ class ExcelAdapter:
                 'bids_count': 0,
                 'highest_bidder_id': '',
                 'last_bid_time': '',
-                'start_time': datetime.now().isoformat(),
-                'end_time': datetime.now().isoformat() # Should be set by admin
+                'start_time': datetime.now(TAIPEI_TZ).isoformat(),
+                'end_time': datetime.now(TAIPEI_TZ).isoformat() # Should be set by admin
             }
             for k,v in defaults.items():
                 if k not in product_dict:
