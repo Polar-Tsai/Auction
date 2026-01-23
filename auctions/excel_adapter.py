@@ -400,6 +400,12 @@ class ExcelAdapter:
             current_price = float(product.get('current_price') if not pd.isna(product.get('current_price')) else product.get('start_price',0))
             bids_count = int(product.get('bids_count', 0)) if not pd.isna(product.get('bids_count')) else 0
             
+            # CRITICAL: Self-bidding restriction check inside the lock
+            current_highest_bidder = self._normalize_id(product.get('highest_bidder_id', ''))
+            new_bidder = self._normalize_id(employee_id)
+            if current_highest_bidder == new_bidder:
+                raise ValueError("You are already the highest bidder (Race condition guarded)")
+
             # For first bid: allow amount == start_price  
             # For subsequent bids: amount must be > current_price
             if bids_count == 0:
