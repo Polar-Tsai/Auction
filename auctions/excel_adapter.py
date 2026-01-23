@@ -41,6 +41,20 @@ class ExcelAdapter:
         portalocker.unlock(f)
         f.close()
 
+    def _normalize_id(self, value):
+        """
+        標準化 ID：將各種格式的 ID（如 1244, 1244.0, "1244.0"）統一轉換為整數字串（如 "1244"）。
+        這解決了 CSV 資料中 ID 格式不一致的問題。
+        """
+        if pd.isna(value) or value == '':
+            return ''
+        try:
+            # 嘗試轉換為浮點數再轉為整數，最後轉為字串以去除小數點
+            return str(int(float(value)))
+        except (ValueError, TypeError):
+            # 如果轉換失敗，直接返回去除前後空白的字串
+            return str(value).strip()
+
     def _ensure_aware(self, val):
         """Robustly convert a value (string, datetime, Timestamp) to an aware Taipei datetime."""
         if not val or pd.isna(val) or val == '':
@@ -190,10 +204,14 @@ class ExcelAdapter:
     def get_employee_by_employeeId(self, employeeId):
         try:
             df = pd.read_csv(self.employees_path, dtype=str, encoding='utf-8-sig')
-            res = df[df['employeeId'] == str(employeeId)]
-            if res.empty:
-                return None
-            return res.iloc[0].to_dict()
+            # 使用標準化後的 ID 進行比較
+            target_id = self._normalize_id(employeeId)
+            
+            # 對 CSV 中的每一列也進行標準化比較
+            for _, row in df.iterrows():
+                if self._normalize_id(row['employeeId']) == target_id:
+                    return row.to_dict()
+            return None
         except Exception:
             return None
 
@@ -267,31 +285,16 @@ class ExcelAdapter:
             amount = b.get('amount', 0)
             if pid not in product_highest_bids or amount > product_highest_bids[pid]:
                 product_highest_bids[pid] = amount
-        
         # Group bids by product
         from collections import defaultdict
         grouped_bids = defaultdict(lambda: {'bids': []})
-        
-        def normalize_id(value):
-            """
-            標準化 ID：將浮點數格式的 ID（如 1244.0）轉換為整數字串（如 "1244"）
-            這解決了 CSV 資料中 ID 格式不一致的問題
-            """
-            if pd.isna(value) or value == '':
-                return ''
-            try:
-                # 嘗試轉換為整數再轉字串，去除小數點
-                return str(int(float(value)))
-            except (ValueError, TypeError):
-                # 如果轉換失敗，直接返回去除空白的字串
-                return str(value).strip()
         
         for b in bids:
             pid = b.get('product_id')
             product_name = prod_map.get(pid, f'Unknown Product ({pid})')
             
             # Determine if this bid is a winning bid
-            highest_bidder = normalize_id(highest_bidder_map.get(pid, ''))
+            highest_bidder = self._normalize_id(highest_bidder_map.get(pid, ''))
             product_status = str(status_map.get(pid, ''))
             is_highest_for_employee = (b.get('amount', 0) == product_highest_bids.get(pid, -1))
             
@@ -300,7 +303,7 @@ class ExcelAdapter:
             # 2. This is the employee's highest bid on this product
             # 3. Product is not marked as "Unsold" (流標)
             is_winning = (
-                normalize_id(employee_id) == highest_bidder and 
+                self._normalize_id(employee_id) == highest_bidder and 
                 is_highest_for_employee and
                 product_status != 'Unsold'
             )
