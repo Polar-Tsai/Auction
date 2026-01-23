@@ -32,22 +32,16 @@ class BidService:
             
             # 4. Anti-Sniper: Check if we need to extend the auction time
             try:
-                end_time_str = product.get('end_time')
-                if end_time_str:
-                    # Parse end time - could be string or datetime object
-                    if isinstance(end_time_str, datetime):
-                        end_time = end_time_str
-                    else:
-                        # Parse string (format: "YYYY-MM-DD HH:MM" or "YYYY-MM-DD HH:MM:SS")
-                        end_time_str_clean = str(end_time_str).strip()
-                        try:
-                            # Try with seconds first
-                            end_time = datetime.strptime(end_time_str_clean, "%Y-%m-%d %H:%M:%S")
-                        except ValueError:
-                            # Fall back to minutes only
-                            end_time = datetime.strptime(end_time_str_clean, "%Y-%m-%d %H:%M")
+                import pytz
+                TAIPEI_TZ = pytz.timezone('Asia/Taipei')
+                
+                end_time = product.get('end_time')
+                if end_time and isinstance(end_time, datetime):
+                    # Ensure end_time is aware
+                    if end_time.tzinfo is None:
+                        end_time = TAIPEI_TZ.localize(end_time)
                     
-                    current_time = datetime.now()
+                    current_time = datetime.now(TAIPEI_TZ)
                     time_remaining = (end_time - current_time).total_seconds()
                     
                     # If bid within threshold and auction hasn't ended yet
@@ -55,11 +49,11 @@ class BidService:
                         # Extend the auction by ANTI_SNIPER_EXTEND_SECONDS from the original end time
                         new_end_time = end_time + timedelta(seconds=ANTI_SNIPER_EXTEND_SECONDS)
                         self.adapter.update_product(product_id, {
-                            'end_time': new_end_time.strftime("%Y-%m-%d %H:%M:%S")
+                            'end_time': new_end_time.strftime("%Y-%m-%dT%H:%M:%S%z")
                         })
                         
                         result['time_extended'] = True
-                        result['new_end_time'] = new_end_time.strftime("%Y-%m-%d %H:%M:%S")
+                        result['new_end_time'] = new_end_time.strftime("%Y-%m-%dT%H:%M:%S%z")
                         result['extension_seconds'] = ANTI_SNIPER_EXTEND_SECONDS
                         
                         logger.info(f"🕒 Anti-sniper: Extended auction time for product {product_id} by {ANTI_SNIPER_EXTEND_SECONDS}s. New end time: {new_end_time}")
