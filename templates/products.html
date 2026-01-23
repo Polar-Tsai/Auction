@@ -1,6 +1,7 @@
 {% extends 'base.html' %}
 {% load i18n %}
 {% load static %}
+{% load auction_extras %}
 
 {% block content %}
 <!-- Include Polling CSS -->
@@ -74,7 +75,21 @@
        <!-- Info Body -->
        <div class="p-4">
          <a href="{% url 'auctions:product_detail' p.id %}" class="block hover:underline">
-             <h3 class="font-bold text-lg text-gray-900 mb-1 truncate" title="{{ p.name }}">{{ p.name }}</h3>
+             <h3 class="font-bold text-lg text-gray-900 mb-1 truncate" title="{{ p.name }}">
+                {% if "," in p.name %}
+                    {% with title_parts=p.name|split:"," %}
+                        {% if LANGUAGE_CODE|slice:":2" == "zh" %}
+                            {{ title_parts.0 }}
+                        {% elif LANGUAGE_CODE == "id" and title_parts|length > 1 %}
+                            {{ title_parts.1 }}
+                        {% else %}
+                            {{ title_parts.0 }}
+                        {% endif %}
+                    {% endwith %}
+                {% else %}
+                    {{ p.name }}
+                {% endif %}
+             </h3>
          </a>
          
          <div class="mb-1">

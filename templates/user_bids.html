@@ -1,5 +1,6 @@
 {% extends 'base.html' %}
 {% load i18n %}
+{% load auction_extras %}
 {% block content %}
 <div class="max-w-4xl mx-auto p-6">
     <h1 class="text-2xl font-bold mb-2 pb-2 text-gray-800 border-b">{% trans "個人出價紀錄" %}</h1>
@@ -30,8 +31,22 @@
                            onclick="event.stopPropagation();"
                            data-full-name="{{ product.product_name }}"
                            data-product-id="{{ product.product_id }}">
-                            <!-- Will be populated by JavaScript -->
-                            <span class="name-display">{{ product.product_name }}</span>
+                            <!-- Language Splitting Logic -->
+                            <span class="name-display">
+                                {% if "," in product.product_name %}
+                                    {% with title_parts=product.product_name|split:"," %}
+                                        {% if LANGUAGE_CODE|slice:":2" == "zh" %}
+                                            {{ title_parts.0 }}
+                                        {% elif LANGUAGE_CODE == "id" and title_parts|length > 1 %}
+                                            {{ title_parts.1 }}
+                                        {% else %}
+                                            {{ title_parts.0 }}
+                                        {% endif %}
+                                    {% endwith %}
+                                {% else %}
+                                    {{ product.product_name }}
+                                {% endif %}
+                            </span>
                         </a>
                         
                         <!-- Mobile Expand Button (hidden on desktop) -->
@@ -121,63 +136,9 @@ function getCurrentLanguage() {
     return 'zh-hant';  // Default to Traditional Chinese
 }
 
-// Smart name splitting based on language
-function getLocalizedName(fullName, language) {
-    // Try to detect if name contains both Chinese and Latin characters
-    const hasChinese = /[\u4e00-\u9fa5]/.test(fullName);
-    const hasLatin = /[a-zA-Z]/.test(fullName);
-    
-    if (!hasChinese || !hasLatin) {
-        // If only one script, return as is
-        return fullName;
-    }
-    
-    // Split by common separators or patterns
-    // Pattern 1: "中文 English" - space separated
-    // Pattern 2: "中文😭圖 English" - emoji + space
-    const parts = fullName.split(/\s+/);
-    
-    if (parts.length < 2) return fullName;
-    
-    // Find the split point between Chinese and Latin parts
-    let chinesePart = [];
-    let latinPart = [];
-    
-    for (let part of parts) {
-        // Check if contains Chinese characters (including emoji which are high unicode)
-        if (/[\u4e00-\u9fa5]/.test(part) || /[\u{1F300}-\u{1F9FF}]/u.test(part)) {
-            // Contains Chinese characters or emoji
-            chinesePart.push(part);
-        } else if (/[a-zA-Z]/.test(part)) {
-            // Contains Latin characters
-            latinPart.push(part);
-        }
-    }
-    
-    if (language === 'zh-hant') {
-        return chinesePart.length > 0 ? chinesePart.join(' ') : fullName;
-    } else {
-        return latinPart.length > 0 ? latinPart.join(' ') : fullName;
-    }
-}
-
 // Initialize product names on page load
 function initializeProductNames() {
-    const language = getCurrentLanguage();
-    const links = document.querySelectorAll('.product-name-link');
-    
-    links.forEach(link => {
-        const fullName = link.getAttribute('data-full-name');
-        const nameDisplay = link.querySelector('.name-display');
-        
-        if (fullName && nameDisplay) {
-            const localizedName = getLocalizedName(fullName, language);
-            nameDisplay.textContent = localizedName;
-            
-            // Store both versions for toggle
-            link.setAttribute('data-localized-name', localizedName);
-        }
-    });
+    console.log('Product names handled by template logic');
 }
 
 // Toggle name expansion on mobile
