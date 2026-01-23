@@ -272,12 +272,26 @@ class ExcelAdapter:
         from collections import defaultdict
         grouped_bids = defaultdict(lambda: {'bids': []})
         
+        def normalize_id(value):
+            """
+            標準化 ID：將浮點數格式的 ID（如 1244.0）轉換為整數字串（如 "1244"）
+            這解決了 CSV 資料中 ID 格式不一致的問題
+            """
+            if pd.isna(value) or value == '':
+                return ''
+            try:
+                # 嘗試轉換為整數再轉字串，去除小數點
+                return str(int(float(value)))
+            except (ValueError, TypeError):
+                # 如果轉換失敗，直接返回去除空白的字串
+                return str(value).strip()
+        
         for b in bids:
             pid = b.get('product_id')
             product_name = prod_map.get(pid, f'Unknown Product ({pid})')
             
             # Determine if this bid is a winning bid
-            highest_bidder = str(highest_bidder_map.get(pid, ''))
+            highest_bidder = normalize_id(highest_bidder_map.get(pid, ''))
             product_status = str(status_map.get(pid, ''))
             is_highest_for_employee = (b.get('amount', 0) == product_highest_bids.get(pid, -1))
             
@@ -286,7 +300,7 @@ class ExcelAdapter:
             # 2. This is the employee's highest bid on this product
             # 3. Product is not marked as "Unsold" (流標)
             is_winning = (
-                str(employee_id) == highest_bidder and 
+                normalize_id(employee_id) == highest_bidder and 
                 is_highest_for_employee and
                 product_status != 'Unsold'
             )
