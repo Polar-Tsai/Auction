@@ -452,7 +452,11 @@ class ExcelAdapter:
             
             i = idx_list[0]
             for k, v in updates.items():
-                df.at[i, k] = v
+                # Safety check: If setting an empty string to a numeric column, use None/NaN
+                if v == '' and k in df.columns and pd.api.types.is_numeric_dtype(df[k]):
+                    df.at[i, k] = None
+                else:
+                    df.at[i, k] = v
                 
             self._write_and_unlock(f, df)
             return True
