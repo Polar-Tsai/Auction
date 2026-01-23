@@ -587,7 +587,10 @@ async function pollData() {
         const res = await fetch(`/${langPrefix}/api/products/${productId}/poll/`);
         const data = await res.json();
         if (data.success) {
-            // Update end_time if it changed (anti-sniper extension)
+            // Sync frontend time with server time
+            if (typeof ServerTime !== 'undefined') {
+                ServerTime.sync(data.timestamp);
+            }
             const p = data.product;
             if (p.end_time) {
                 // p.end_time is now expected to be an ISO 8601 string from views.py
