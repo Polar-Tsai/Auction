@@ -10,8 +10,8 @@ logger = get_logger(__name__)
 TAIPEI_TZ = pytz.timezone('Asia/Taipei')
 
 # Anti-sniper: extend end time if bid within this threshold
-ANTI_SNIPER_THRESHOLD_SECONDS = 10
-ANTI_SNIPER_EXTEND_SECONDS = 10
+ANTI_SNIPER_THRESHOLD_SECONDS = 10 # ⏰ 觸發門檻
+ANTI_SNIPER_EXTEND_SECONDS = 10 # ⏰ 延長時間
 
 class BidService:
     def __init__(self, adapter):
@@ -46,6 +46,16 @@ class BidService:
                     current_time = datetime.now(TAIPEI_TZ)
                     time_remaining = (end_time - current_time).total_seconds()
                     
+                    # 🔍 診斷日誌：記錄每次出價的時間資訊
+                    logger.info(
+                        f"⏱️  Anti-sniper check | Product: {product_id} | "
+                        f"User: {employee_id} | "
+                        f"Current Time: {current_time.strftime('%H:%M:%S.%f')[:-3]} | "
+                        f"End Time: {end_time.strftime('%H:%M:%S.%f')[:-3]} | "
+                        f"Time Remaining: {time_remaining:.2f}s | "
+                        f"Threshold: {ANTI_SNIPER_THRESHOLD_SECONDS}s"
+                    )
+                    
                     # If bid within threshold and auction hasn't ended yet
                     if 0 < time_remaining < ANTI_SNIPER_THRESHOLD_SECONDS:
                         # Extend the auction by ANTI_SNIPER_EXTEND_SECONDS from the original end time
@@ -58,9 +68,17 @@ class BidService:
                         result['new_end_time'] = new_end_time.strftime("%Y-%m-%dT%H:%M:%S%z")
                         result['extension_seconds'] = ANTI_SNIPER_EXTEND_SECONDS
                         
-                        logger.info(f"🕒 Anti-sniper: Extended auction time for product {product_id} by {ANTI_SNIPER_EXTEND_SECONDS}s. New end time: {new_end_time}")
+                        logger.info(
+                            f"✅ Anti-sniper TRIGGERED | Product: {product_id} | "
+                            f"Extended by {ANTI_SNIPER_EXTEND_SECONDS}s | "
+                            f"New end time: {new_end_time.strftime('%H:%M:%S')}"
+                        )
                     else:
                         result['time_extended'] = False
+                        if time_remaining <= 0:
+                            logger.info(f"❌ Anti-sniper NOT triggered | Product: {product_id} | Reason: Auction already ended")
+                        else:
+                            logger.info(f"❌ Anti-sniper NOT triggered | Product: {product_id} | Reason: {time_remaining:.2f}s > {ANTI_SNIPER_THRESHOLD_SECONDS}s threshold")
                 else:
                     result['time_extended'] = False
             except Exception as ext_error:

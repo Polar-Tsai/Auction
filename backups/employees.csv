@@ -1,0 +1,7 @@
+﻿id,employeeId,name,department,email,admin
+1,0001,Testing User,RD,test@kingsteel.com
+2,1244,Polar,,polar@kingsteel.com,true
+3,0477,咪姐,,mlp@kingsteel.com
+4,1253,阿維,,wayne@kingsteel.com
+5,0993,Betty,,bettylu@kingsteel.com
+6,1106,Stacey,,stacey@kingsteel.com
